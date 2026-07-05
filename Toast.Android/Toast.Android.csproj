@@ -12,9 +12,20 @@
       Enables trim analyzers and full trimming during Release mode.
       To learn more, see: https://learn.microsoft.com/dotnet/core/deploying/trimming/trimming-options#trimming-granularity
     -->
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <TrimMode>full</TrimMode>
+
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Toast.Core\Toast.Core.csproj" />
   </ItemGroup>
+	<ItemGroup>
+		<Folder Include="Receivers\" />
+	</ItemGroup>
+	<ItemGroup>
+		<Folder Include="Services\" />
+	</ItemGroup>
+	<ItemGroup>
+		<Folder Include="Helpers\" />
+	</ItemGroup>
 </Project>
