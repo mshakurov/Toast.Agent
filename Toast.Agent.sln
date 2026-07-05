@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Toast.Android", "Toast.Andr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Toast.Core", "Toast.Core\Toast.Core.csproj", "{F656E1B1-0D96-47BD-97D0-C4EF356E356E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Toast.Tests", "Toast.Tests\Toast.Tests.csproj", "{5EBC0C44-1854-4857-8A85-4E690A98C05A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,6 +25,10 @@ Global
 		{F656E1B1-0D96-47BD-97D0-C4EF356E356E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F656E1B1-0D96-47BD-97D0-C4EF356E356E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F656E1B1-0D96-47BD-97D0-C4EF356E356E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5EBC0C44-1854-4857-8A85-4E690A98C05A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5EBC0C44-1854-4857-8A85-4E690A98C05A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5EBC0C44-1854-4857-8A85-4E690A98C05A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5EBC0C44-1854-4857-8A85-4E690A98C05A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
