@@ -37,6 +37,19 @@
 				android:focusableInTouchMode="true"/>
 
 		<Button
+				android:id="@+id/buttonTest1"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:layout_weight="1"
+				android:text="@string/buttonTest1"
+				android:focusable="true"
+				android:focusableInTouchMode="true"/>
+
+
+
+
+		<!-- Последняя кнопка выхода -->
+		<Button
 				android:id="@+id/buttonExit"
 				android:layout_width="0dp"
 				android:layout_height="wrap_content"

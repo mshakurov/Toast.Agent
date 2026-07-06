@@ -26,7 +26,7 @@ namespace Toast.AndroidOS.Services
     {
       base.OnCreate();
 
-      _logger = CompositionRoot.CreateLogger();
+      _logger = CompositionRoot.GetSingletonLogger();
 
       _logger.Info( this, "OnCreate" );
 

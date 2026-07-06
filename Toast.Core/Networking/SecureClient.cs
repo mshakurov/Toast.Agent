@@ -1,0 +1,45 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+using Toast.Core.Interfaces;
+using Toast.Core.Services;
+
+namespace Toast.Core.Networking
+{
+  internal class SecureClient
+  {
+    string baseServerUrl = "https://192.168.1.252:7101";
+
+    public HttpClient SecureDataClient;
+    private readonly ILogger logger;
+
+    public SecureClient( Interfaces.ILogger logger )
+    {
+      this.logger = logger;
+      HttpClientHandler httpClientHandler = new()
+      {
+        //SslProtocols = System.Security.Authentication.SslProtocols.Tls12,
+      };
+      httpClientHandler.ServerCertificateCustomValidationCallback += ( _1, _2, _3, _4 ) => true;
+
+      // 1. Клиент чисто для аутентификации (ему не нужны заголовки)
+      var baseClient = new HttpClient( httpClientHandler ) { BaseAddress = new Uri( baseServerUrl ) };
+      var authService = new AuthService( baseClient );
+
+      // 2. Собираем защищенный клиент, передавая ему наш кастомный Handler
+      var jwtHandler = new JwtAuthorizationHandler( authService )
+      {
+        InnerHandler = httpClientHandler // Базовый сетевой обработчик Android
+      };
+
+      // ЭТИМ клиентом мы пользуемся во всем Android-приложении для работы с данными
+      SecureDataClient = new HttpClient( jwtHandler )
+      {
+        BaseAddress = new Uri( baseServerUrl )
+      };
+    }
+  }
+}

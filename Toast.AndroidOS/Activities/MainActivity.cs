@@ -1,3 +1,4 @@
+
 using Toast.AndroidOS.Bootstrap;
 using Toast.AndroidOS.Services;
 using Toast.Core.Interfaces;
@@ -8,7 +9,7 @@ namespace Toast.AndroidOS.Activities
   public class MainActivity : Activity
   {
     private TextView? textView;
-    private readonly ILogger _logger = CompositionRoot.CreateLogger();
+    private readonly ILogger _logger = CompositionRoot.GetSingletonLogger();
     private PermissionCheckHelper? _permissionCheckHelper;
     private readonly CancellationTokenSource _ctsCheckPermissions = new();
 
@@ -67,6 +68,41 @@ namespace Toast.AndroidOS.Activities
 
       //  нопка Exit Ц закрывает окно
       SetupBtnExit();
+
+      //  нопка Test1 Ц тест 1
+      SetupBtnTest1();
+    }
+
+    private void SetupBtnTest1()
+    {
+      var btnTest1 = FindViewById<Button>( Resource.Id.buttonTest1 );
+      if ( btnTest1 != null )
+      {
+        btnTest1.Click += ( sender, e ) =>
+        {
+          btnTest1.Enabled = false;
+          Task.Factory.StartNew( () =>
+          {
+            _logger.Info( this, $"buttonTest1, Creating test service ... " );
+
+            var srv = CompositionRoot.CreateTestServerAuthorizedRequestService( _logger );
+
+            _logger.Info( this, $"buttonTest1, Requesting test data..." );
+
+            var result = srv.LoadItemsFromServerAsync().Result;
+
+            this.RunOnUiThread( () =>
+            {
+              btnTest1.Enabled = true;
+
+              if ( textView != null )
+                textView.Text = $"Result ({result.Count}):" + System.Environment.NewLine + string.Join( System.Environment.NewLine, result.Select( r => $"- {r.Id}|{r.Name}|{r.Value}" ) );
+            } );
+          } );
+        };
+      }
+      else
+        _logger.Error( this, "# Button buttonExit not found" );
     }
 
     private void SetupBtnExit()
@@ -76,11 +112,11 @@ namespace Toast.AndroidOS.Activities
       {
         btnExit.Click += ( sender, e ) =>
         {
-          _logger.Info( this, $"OnCreate, > FinishAndRemoveTask ... " );
+          _logger.Info( this, $"btnExit > FinishAndRemoveTask ... " );
 
           FinishAndRemoveTask();
 
-          _logger.Info( this, $"OnCreate, < FinishAndRemoveTask" );
+          _logger.Info( this, $"btnExit < FinishAndRemoveTask" );
         };
       }
       else

@@ -1,18 +1,26 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+
+using Toast.Core.Commands;
 
 namespace Toast.Server.Api.Controllers
 {
   [ApiController]
   [Route( "api/[controller]" )]
-  [Authorize] // Защищает все эндпоинты контроллера
+  //[Authorize] // Защищает все эндпоинты контроллера
+  [Authorize( AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme )]
   public class DataController : ControllerBase
   {
     [HttpGet( "items" )]
-    public IActionResult GetSharedData()
+    public IActionResult GetProtectedData()
     {
-      var data = new { Message = "Это защищенные данные для Android", Date = DateTime.UtcNow };
-      return Ok( data ); // Автоматически сериализует в JSON
+      var secureData = new List<DataItem>
+        {
+            new(1, "Товар 1", "Секретное значение А"),
+            new(2, "Товар 2", "Секретное значение Б")
+        };
+      return Ok( secureData );
     }
   }
 }

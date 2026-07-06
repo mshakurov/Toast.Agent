@@ -14,10 +14,10 @@
 		<Folder Include="Configuration\" />
 	</ItemGroup>
 	<ItemGroup>
-		<Folder Include="Networking\" />
+		<Folder Include="Utilities\" />
 	</ItemGroup>
 	<ItemGroup>
-		<Folder Include="Utilities\" />
+	  <ProjectReference Include="..\Toast.Core.Commands\Toast.Core.Commands.csproj" />
 	</ItemGroup>
 
 </Project>

@@ -9,9 +9,11 @@ namespace Toast.AndroidOS.Bootstrap;
 
 internal static class CompositionRoot
 {
+  static ILogger? _singletonLogger;
+
   public static IAgent CreateAgent(IAgentStatusListener agentStatusListener)
   {
-    ILogger logger = CreateLogger();
+    ILogger logger = GetSingletonLogger();
 
     var context = new AgentContext
     {
@@ -27,9 +29,10 @@ internal static class CompositionRoot
   public static string GetSystemTag() => nameof( Toast.AndroidOS ).Split( '.' ).Last();
 
 
-  public static ILogger CreateLogger()
-  {
-    return new AndroidLogger( GetSystemTag() );
-  }
+  public static ILogger CreateNewLogger() => new AndroidLogger( GetSystemTag() );
+
+  public static ILogger GetSingletonLogger() => _singletonLogger ??= new AndroidLogger( GetSystemTag() );
+
+  public static ITestServerAuthorizedRequestService CreateTestServerAuthorizedRequestService( ILogger logger ) => CoreFactory.CreateTestServerAuthorizedRequestService( GetSingletonLogger() );
 
 }
