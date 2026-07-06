@@ -9,7 +9,8 @@ namespace Toast.AndroidOS.Activities
   {
     private TextView? textView;
     private readonly ILogger _logger = CompositionRoot.CreateLogger();
-    private int requestPermissionCount = 0;
+    private PermissionCheckHelper? _permissionCheckHelper;
+    private readonly CancellationTokenSource _ctsCheckPermissions = new();
 
     protected override void OnCreate( Bundle? savedInstanceState )
     {
@@ -22,52 +23,21 @@ namespace Toast.AndroidOS.Activities
 
       SetupControls();
 
-      CheckPermissions();
+      _permissionCheckHelper = new PermissionCheckHelper( this, _logger, textView, _ctsCheckPermissions.Token );
     }
 
     protected override void OnStart()
     {
       base.OnStart();
+
+      _permissionCheckHelper?.CheckPermissions();
     }
 
-    private bool CheckPermissions()
+    protected override void OnStop()
     {
-      if ( OperatingSystem.IsAndroidVersionAtLeast( 33 ) )
-      {
-        var granted =
-            CheckSelfPermission( Android.Manifest.Permission.PostNotifications );
+      _ctsCheckPermissions.Cancel();
 
-        Android.Util.Log.Info(
-            "Toast",
-            $"POST_NOTIFICATIONS = {granted}" );
-
-        if ( textView != null )
-          textView.Text = $"POST_NOTIFICATIONS = {granted}";
-
-        if ( granted != Android.Content.PM.Permission.Granted )
-        {
-          if ( ++requestPermissionCount <= 2 )
-          {
-            RequestPermissions(
-                new[]
-                {
-                  Android.Manifest.Permission.PostNotifications
-                },
-                100 );
-          }
-          else
-          {
-            Android.Widget.Toast.MakeText(this, Resource.String.setNotificationPermissionsEn, ToastLength.Long)?.Show();
-
-            var intent = new Intent( Android.Provider.Settings.ActionApplicationDetailsSettings );
-            intent.SetData( Android.Net.Uri.Parse( $"package:{PackageName}" ) );
-            StartActivity( intent );
-          }
-        }
-
-        return CheckSelfPermission( Android.Manifest.Permission.PostNotifications ) == Android.Content.PM.Permission.Granted;
-      }
-      return true;
+      base.OnStop();
     }
 
     public override bool ShouldShowRequestPermissionRationale( string permission )
@@ -90,32 +60,35 @@ namespace Toast.AndroidOS.Activities
       textView = FindViewById<TextView>( Resource.Id.app_text );
 
       //  нопка Start Ц запускает сервис
-      var btnStart = FindViewById<Button>( Resource.Id.buttonStart );
-      if ( btnStart != null )
-      {
-        btnStart.Click += ( sender, e ) =>
-        {
-          CheckPermissions();
-
-          _logger.Debug( this, $"buttonStart, Creating Intent" );
-
-          var intent = new Intent( this, typeof( AgentService ) );
-
-          _logger.Debug( this, $"buttonStart, Intent created. Calling StartService..." );
-
-          StartService( intent );
-
-          _logger.Debug( this, $"buttonStart, StartService call finished." );
-        };
-
-        btnStart.RequestFocus();
-        btnStart.Post( () => btnStart.RequestFocus() );
-        btnStart.PostDelayed( () => btnStart.RequestFocus(), 100 );
-      }
-      else
-        _logger.Error( this, "# Button buttonStart not found" );
+      SetupBtnStart();
 
       //  нопка Stop Ц останавливает сервис
+      SetupBtnStop();
+
+      //  нопка Exit Ц закрывает окно
+      SetupBtnExit();
+    }
+
+    private void SetupBtnExit()
+    {
+      var btnExit = FindViewById<Button>( Resource.Id.buttonExit );
+      if ( btnExit != null )
+      {
+        btnExit.Click += ( sender, e ) =>
+        {
+          _logger.Info( this, $"OnCreate, > FinishAndRemoveTask ... " );
+
+          FinishAndRemoveTask();
+
+          _logger.Info( this, $"OnCreate, < FinishAndRemoveTask" );
+        };
+      }
+      else
+        _logger.Error( this, "# Button buttonExit not found" );
+    }
+
+    private void SetupBtnStop()
+    {
       var btnStop = FindViewById<Button>( Resource.Id.buttonStop );
       if ( btnStop != null )
       {
@@ -138,23 +111,34 @@ namespace Toast.AndroidOS.Activities
       }
       else
         _logger.Error( this, "# Button buttonStop not found" );
+    }
 
-      //  нопка Exit Ц закрывает окно
-      var btnExit = FindViewById<Button>( Resource.Id.buttonExit );
-      if ( btnExit != null )
+    private void SetupBtnStart()
+    {
+      var btnStart = FindViewById<Button>( Resource.Id.buttonStart );
+      if ( btnStart != null )
       {
-        btnExit.Click += ( sender, e ) =>
+        btnStart.Click += ( sender, e ) =>
         {
-          _logger.Info( this, $"OnCreate, > FinishAndRemoveTask ... " );
+          _permissionCheckHelper?.CheckPermissions();
 
-          FinishAndRemoveTask();
+          _logger.Debug( this, $"buttonStart, Creating Intent" );
 
-          _logger.Info( this, $"OnCreate, < FinishAndRemoveTask" );
+          var intent = new Intent( this, typeof( AgentService ) );
+
+          _logger.Debug( this, $"buttonStart, Intent created. Calling StartService..." );
+
+          StartService( intent );
+
+          _logger.Debug( this, $"buttonStart, StartService call finished." );
         };
+
+        btnStart.RequestFocus();
+        btnStart.Post( () => btnStart.RequestFocus() );
+        btnStart.PostDelayed( () => btnStart.RequestFocus(), 100 );
       }
       else
-        _logger.Error( this, "# Button buttonExit not found" );
-
+        _logger.Error( this, "# Button buttonStart not found" );
     }
   }
 }
