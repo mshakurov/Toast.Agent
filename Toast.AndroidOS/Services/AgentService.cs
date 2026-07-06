@@ -10,7 +10,7 @@ namespace Toast.AndroidOS.Services
   [Service(
     Enabled = true,
     Exported = false )]
-  public sealed class AgentService : Service
+  internal sealed class AgentService : Service
   {
     private CancellationTokenSource? _cts;
     private Task? _agentTask;
@@ -21,7 +21,7 @@ namespace Toast.AndroidOS.Services
     {
       base.OnCreate();
 
-      _logger = AgentFactory.CreateLogger();
+      _logger = CompositionRoot.CreateLogger();
 
       _logger.Info( this, "Created" );
 
@@ -45,7 +45,7 @@ namespace Toast.AndroidOS.Services
       {
         _cts = new CancellationTokenSource();
 
-        var agent = AgentFactory.Create();
+        var agent = CompositionRoot.Create( new AndroidStatusListener( this, _logger ) );
 
         _agentTask = Task.Run( () => agent.ExecuteAsync( _cts.Token ) );
       }

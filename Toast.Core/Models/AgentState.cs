@@ -4,24 +4,23 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Toast.Core.Models
+namespace Toast.Core.Models;
+
+public enum AgentState
 {
-  public enum AgentState
-  {
-    Starting,
+  Starting,
 
-    Waiting,
+  Waiting,
 
-    Polling,
+  Polling,
 
-    Executing,
+  Executing,
 
-    Offline,
+  Offline,
 
-    Error,
+  Error,
 
-    Stopping,
+  Stopping,
 
-    Stopped
-  }
+  Stopped
 }

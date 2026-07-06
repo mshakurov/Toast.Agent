@@ -7,19 +7,20 @@ using Toast.Core.Services;
 
 namespace Toast.AndroidOS.Bootstrap;
 
-internal static class AgentFactory
+internal static class CompositionRoot
 {
-  public static Agent Create()
+  public static IAgent Create(IAgentStatusListener agentStatusListener)
   {
     ILogger logger = CreateLogger();
 
     var context = new AgentContext
     {
       Logger = logger,
-      Settings = new AgentSettings()
+      Settings = new AgentSettings(),
+      AgentStatusListener = agentStatusListener
     };
 
-    return new Agent( context );
+    return CoreFactory.CreateAgent( context );
   }
 
   public static string GetSystemTag() => nameof( Toast.AndroidOS ).Split( '.' ).Last();
@@ -29,7 +30,5 @@ internal static class AgentFactory
   {
     return new AndroidLogger( GetSystemTag() );
   }
-
-  public static IPollingService CreatePollingService( ILogger logger ) => CoreFactory.CreatePollingService( logger );
 
 }

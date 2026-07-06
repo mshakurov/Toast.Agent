@@ -10,7 +10,7 @@ namespace Toast.AndroidOS.Activities
   [Activity( Label = "@string/app_name", MainLauncher = true )]
   public class MainActivity : Activity
   {
-    private readonly ILogger _logger = AgentFactory.CreateLogger();
+    private readonly ILogger _logger = CompositionRoot.CreateLogger();
 
     protected override void OnCreate( Bundle? savedInstanceState )
     {

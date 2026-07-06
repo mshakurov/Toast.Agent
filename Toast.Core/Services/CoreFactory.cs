@@ -11,7 +11,7 @@ namespace Toast.Core.Services
   public static class CoreFactory
   {
 
-    public static IPollingService CreatePollingService( ILogger logger ) => new PollingService( logger );
+    public static IAgent CreateAgent( AgentContext context ) => new Agent( context );
 
   }
 }

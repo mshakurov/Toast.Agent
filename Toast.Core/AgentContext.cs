@@ -13,5 +13,7 @@ namespace Toast.Core
     public required ILogger Logger { get; init; }
 
     public required IAgentSettings Settings { get; init; }
+
+    public required IAgentStatusListener AgentStatusListener { get; init; }
   }
 }

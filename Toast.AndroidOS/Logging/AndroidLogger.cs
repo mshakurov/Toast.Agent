@@ -3,7 +3,7 @@ using Toast.Core.Interfaces;
 
 namespace Toast.AndroidOS.Logging
 {
-  public sealed class AndroidLogger : ILogger
+  internal sealed class AndroidLogger : ILogger
   {
     string system;
     public AndroidLogger( string system ) { this.system = system; }
