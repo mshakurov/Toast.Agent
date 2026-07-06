@@ -28,11 +28,11 @@ internal static class NotificationHelper
   {
     var builder = new NotificationCompat.Builder( context, ChannelId );
 
-    if ( builder == null )
-      return new Notification( Resource.Drawable.shuttle, "### Не удалось создать сообщение" );
+    //if ( builder == null )
+    //  return new Notification( Resource.Drawable.shuttle, "### Не удалось создать сообщение" );
 
     builder
-        ?.SetContentTitle( title )
+        .SetContentTitle( title )
         ?.SetContentText( text )
         ?.SetSmallIcon( Resource.Drawable.shuttle )
         ?.SetOngoing( true )
