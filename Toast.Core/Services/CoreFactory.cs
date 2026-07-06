@@ -13,5 +13,6 @@ namespace Toast.Core.Services
 
     public static IAgent CreateAgent( AgentContext context ) => new Agent( context );
 
+    public static IPollingService CreatePollingService( ILogger logger ) => new PollingService( logger );
   }
 }

@@ -15,5 +15,7 @@ namespace Toast.Core
     public required IAgentSettings Settings { get; init; }
 
     public required IAgentStatusListener AgentStatusListener { get; init; }
+
+    public required IPollingService PollingService { get; init; }
   }
 }

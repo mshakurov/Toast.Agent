@@ -17,7 +17,8 @@ internal static class CompositionRoot
     {
       Logger = logger,
       Settings = new AgentSettings(),
-      AgentStatusListener = agentStatusListener
+      AgentStatusListener = agentStatusListener,
+      PollingService = CoreFactory.CreatePollingService(logger )
     };
 
     return CoreFactory.CreateAgent( context );

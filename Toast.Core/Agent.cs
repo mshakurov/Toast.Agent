@@ -17,8 +17,7 @@ namespace Toast.Core
       _logger = agentContext.Logger ?? throw new ArgumentNullException( nameof( agentContext.Logger ) );
       _settings = agentContext.Settings ?? throw new ArgumentNullException( nameof( agentContext.Settings ) );
       _agentStatusListener = agentContext.AgentStatusListener ?? throw new ArgumentNullException( nameof( agentContext.AgentStatusListener ) );
-
-      _pollingService = new PollingService( _logger );
+      _pollingService = agentContext.PollingService ?? throw new ArgumentNullException( nameof( agentContext.PollingService ) );
 
       _logger.Info( this, "Initialized." );
     }
