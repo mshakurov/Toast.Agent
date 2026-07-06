@@ -7,6 +7,9 @@ using Toast.Server.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 1. Добавьте поддержку контроллеров в секцию сервисов
+builder.Services.AddControllers();
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -52,6 +55,11 @@ else
 app.UseHttpsRedirection();
 
 
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseAntiforgery();
 
 app.MapStaticAssets();
@@ -60,5 +68,8 @@ app.MapRazorComponents<App>()
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
+
+// 2. Зарегистрируйте маршруты контроллеров
+app.MapControllers();
 
 app.Run();
