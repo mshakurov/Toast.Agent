@@ -3,6 +3,7 @@
 using Toast.Core;
 using Toast.Core.Interfaces;
 using Toast.Core.Models;
+using Toast.Core.Services;
 
 namespace Toast.AndroidOS.Bootstrap;
 
@@ -28,5 +29,7 @@ internal static class AgentFactory
   {
     return new AndroidLogger( GetSystemTag() );
   }
+
+  public static IPollingService CreatePollingService( ILogger logger ) => CoreFactory.CreatePollingService( logger );
 
 }
