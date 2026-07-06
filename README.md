@@ -1,8 +1,10 @@
-# Toast.Agent
+# (An experiment to study the development of a C# application for Android with a minimal wrapper)
+
+## Toast.Agent
 
 Remote management agent for Android devices written in C#.
 
-## Goals
+### Goals
 
 - Foreground Service
 - Remote commands
