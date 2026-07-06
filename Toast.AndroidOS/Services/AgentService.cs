@@ -1,18 +1,6 @@
-﻿using Android.App;
-using Android.Content;
-using Android.OS;
-
+﻿using Toast.AndroidOS.Bootstrap;
 using Toast.AndroidOS.Logging;
-using Toast.Core;
 using Toast.Core.Interfaces;
-
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Toast.Core.Models;
 
 namespace Toast.AndroidOS.Services
 {
@@ -29,7 +17,7 @@ namespace Toast.AndroidOS.Services
     {
       base.OnCreate();
 
-      _logger = new AndroidLogger( "AndroidOS" );
+      _logger = AgentFactory.CreateLogger();
 
       _logger.Info( this, "Created" );
     }
@@ -45,13 +33,7 @@ namespace Toast.AndroidOS.Services
       {
         _cts = new CancellationTokenSource();
 
-        var context = new AgentContext
-        {
-          Logger = _logger!,
-          Settings = new AgentSettings()
-        };
-
-        var agent = new Agent( context );
+        var agent = AgentFactory.Create();
 
         _agentTask = Task.Run( () => agent.ExecuteAsync( _cts.Token ) );
       }
@@ -72,5 +54,6 @@ namespace Toast.AndroidOS.Services
     {
       return null;
     }
+
   }
 }

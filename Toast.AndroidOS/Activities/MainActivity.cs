@@ -1,3 +1,4 @@
+using Toast.AndroidOS.Bootstrap;
 using Toast.AndroidOS.Logging;
 using Toast.AndroidOS.Services;
 using Toast.Core;
@@ -9,7 +10,7 @@ namespace Toast.AndroidOS.Activities
   [Activity( Label = "@string/app_name", MainLauncher = true )]
   public class MainActivity : Activity
   {
-    private readonly ILogger _logger = new AndroidLogger("AndroidOS");
+    private readonly ILogger _logger = AgentFactory.CreateLogger();
 
     protected override void OnCreate( Bundle? savedInstanceState )
     {
