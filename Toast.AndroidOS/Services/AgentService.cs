@@ -7,7 +7,9 @@ using Toast.Core.Models;
 namespace Toast.AndroidOS.Services
 {
 
-  [Service]
+  [Service(
+    Enabled = true,
+    Exported = false )]
   public sealed class AgentService : Service
   {
     private CancellationTokenSource? _cts;
