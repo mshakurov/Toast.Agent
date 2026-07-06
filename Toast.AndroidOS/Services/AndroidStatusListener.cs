@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using AndroidX.Core.App;
-
-using Toast.AndroidOS.Notifications;
+﻿using Toast.AndroidOS.Notifications;
 using Toast.Core.Interfaces;
 using Toast.Core.Models;
 

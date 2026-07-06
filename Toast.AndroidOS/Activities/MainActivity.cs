@@ -1,9 +1,6 @@
 using Toast.AndroidOS.Bootstrap;
-using Toast.AndroidOS.Logging;
 using Toast.AndroidOS.Services;
-using Toast.Core;
 using Toast.Core.Interfaces;
-using Toast.Core.Models;
 
 namespace Toast.AndroidOS.Activities
 {

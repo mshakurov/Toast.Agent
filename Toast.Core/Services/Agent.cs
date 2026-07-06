@@ -1,9 +1,7 @@
 ﻿using Toast.Core.Interfaces;
-using Toast.Core.Logging;
 using Toast.Core.Models;
-using Toast.Core.Services;
 
-namespace Toast.Core
+namespace Toast.Core.Services
 {
   internal sealed class Agent : IAgent
   {

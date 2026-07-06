@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Toast.Core.Interfaces;
+using Toast.Core.Models;
 
-using Toast.Core.Interfaces;
-
-namespace Toast.Core
+namespace Toast.Core.Models
 {
   public sealed class AgentContext
   {

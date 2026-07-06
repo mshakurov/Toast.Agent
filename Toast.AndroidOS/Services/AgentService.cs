@@ -3,7 +3,6 @@
 using Android.Content.PM;
 
 using Toast.AndroidOS.Bootstrap;
-using Toast.AndroidOS.Logging;
 using Toast.AndroidOS.Notifications;
 using Toast.Core.Interfaces;
 using Toast.Core.Models;

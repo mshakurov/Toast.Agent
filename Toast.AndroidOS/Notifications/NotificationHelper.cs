@@ -1,9 +1,5 @@
 ﻿using System.Runtime.Versioning;
 
-using Android.App;
-using Android.Content;
-using Android.OS;
-
 using AndroidX.Core.App;
 
 using Toast.Core.Models;

@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using Toast.Core.Models;
-
-namespace Toast.Core.Models;
+﻿namespace Toast.Core.Models;
 
 public sealed class AgentStatus
 {
