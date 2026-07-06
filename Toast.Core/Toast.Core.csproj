@@ -14,9 +14,6 @@
 		<Folder Include="Configuration\" />
 	</ItemGroup>
 	<ItemGroup>
-		<Folder Include="Logging\" />
-	</ItemGroup>
-	<ItemGroup>
 		<Folder Include="Models\" />
 	</ItemGroup>
 	<ItemGroup>

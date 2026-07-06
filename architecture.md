@@ -16,7 +16,7 @@ Responsibilities:
 
 ## Projects
 
-Toast.Android
+Toast.Agent.Android
 
 Android specific code only.
 

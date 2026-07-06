@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.37314.3
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Toast.Android", "Toast.Android\Toast.Android.csproj", "{6C6F28CB-65DC-4984-94C2-2AC43A013391}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Toast.AndroidOS", "Toast.AndroidOS\Toast.AndroidOS.csproj", "{6C6F28CB-65DC-4984-94C2-2AC43A013391}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Toast.Core", "Toast.Core\Toast.Core.csproj", "{F656E1B1-0D96-47BD-97D0-C4EF356E356E}"
 EndProject

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Toast.Core.Interfaces
 {
-  public interface INetworkClient
+  public interface IServerConnection
   {
   }
 }

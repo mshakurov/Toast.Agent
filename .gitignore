@@ -57,3 +57,4 @@ TestResult.xml
 nunit-*.xml
 /.vs
 /Toast.Android/.vs
+/Toast.AndroidOS/.vs

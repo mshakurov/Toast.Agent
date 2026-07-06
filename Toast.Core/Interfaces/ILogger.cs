@@ -8,10 +8,14 @@ namespace Toast.Core.Interfaces
 {
   public interface ILogger
   {
-    void Info( string message );
+    void Debug( object source, string message );
 
-    void Warning( string message );
+    void Info( object source, string message );
 
-    void Error( Exception exception );
+    void Warning( object source, string message );
+
+    void Error( object source, string message );
+
+    void Error( object source, Exception exception );
   }
 }

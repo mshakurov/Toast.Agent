@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Toast.Core.Interfaces
 {
-  public interface IUserNotifier
+  public interface IAgentSettings
   {
   }
 }
