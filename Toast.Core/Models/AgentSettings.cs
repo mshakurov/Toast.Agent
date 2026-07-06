@@ -4,9 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Toast.Core.Interfaces
+using Toast.Core.Interfaces;
+
+namespace Toast.Core.Models
 {
-  public interface IAgentSettings
+  public class AgentSettings : IAgentSettings
   {
     public int IntervalSeconds { get; set; }
   }

@@ -12,12 +12,12 @@ namespace Toast.Core
     {
       _logger = agentContext.Logger /*s?? throw new ArgumentNullException( nameof( agentContext.Logger ) )*/;
       _settings = agentContext.Settings /*?? throw new ArgumentNullException( nameof( agentContext.Settings ) )*/;
-      _logger.Info( this, "Agent initialized." );
+      _logger.Info( this, "Initialized." );
     }
 
     public async Task ExecuteAsync( CancellationToken token )
     {
-      _logger.Info( this, "Agent started" );
+      _logger.Info( this, "Started" );
 
       try
       {
@@ -31,8 +31,12 @@ namespace Toast.Core
       catch ( OperationCanceledException )
       {
       }
+      catch ( Exception ex )
+      {
+        _logger.Error( this, $"Error: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}" );
+      }
 
-      _logger.Info( this, "Agent stopped" );
+      _logger.Info( this, "Stopped" );
     }
 
     private async Task ExecuteAsyncIteration( CancellationToken token )

@@ -15,9 +15,9 @@
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 		<TrimMode>full</TrimMode>
 
-		<RuntimeIdentifiers>
+		<!--<RuntimeIdentifiers>
 			android-arm
-		</RuntimeIdentifiers>
+		</RuntimeIdentifiers>-->
 
 	</PropertyGroup>
 
@@ -26,9 +26,6 @@
 	</ItemGroup>
 	<ItemGroup>
 		<Folder Include="Receivers\" />
-	</ItemGroup>
-	<ItemGroup>
-		<Folder Include="Services\" />
 	</ItemGroup>
 	<ItemGroup>
 		<Folder Include="Helpers\" />
