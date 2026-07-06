@@ -1,6 +1,8 @@
 ﻿using Toast.AndroidOS.Bootstrap;
 using Toast.AndroidOS.Logging;
+using Toast.AndroidOS.Notifications;
 using Toast.Core.Interfaces;
+using Toast.Core.Models;
 
 namespace Toast.AndroidOS.Services
 {
@@ -20,6 +22,8 @@ namespace Toast.AndroidOS.Services
       _logger = AgentFactory.CreateLogger();
 
       _logger.Info( this, "Created" );
+
+      NotificationHelper.EnsureChannel( this );
     }
 
     public override StartCommandResult OnStartCommand(
@@ -28,6 +32,12 @@ namespace Toast.AndroidOS.Services
         int startId )
     {
       _logger?.Info( this, "Started" );
+
+      StartForeground(
+        NotificationHelper.NotificationId,
+        NotificationHelper.CreateNotification(
+          this,
+          AgentState.Starting ) );
 
       if ( _agentTask == null )
       {

@@ -13,21 +13,21 @@
       To learn more, see: https://learn.microsoft.com/dotnet/core/deploying/trimming/trimming-options#trimming-granularity
     -->
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-		<TrimMode>full</TrimMode>
+		<!--<TrimMode>full</TrimMode>-->
+		<TrimMode>partial</TrimMode>
 
-		<!--<RuntimeIdentifiers>
+		<RuntimeIdentifiers>
 			android-arm
-		</RuntimeIdentifiers>-->
+		</RuntimeIdentifiers>
 
 	</PropertyGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\Toast.Core\Toast.Core.csproj" />
 	</ItemGroup>
+
 	<ItemGroup>
-		<Folder Include="Receivers\" />
+		<PackageReference Include="Xamarin.AndroidX.Core" Version="*" />
 	</ItemGroup>
-	<ItemGroup>
-		<Folder Include="Helpers\" />
-	</ItemGroup>
+	
 </Project>
