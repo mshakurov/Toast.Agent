@@ -35,7 +35,11 @@ namespace Toast.AndroidOS.Activities
         {
         }
 
-        Finish();
+        _logger.Info( this, $"OnCreate, > FinishAndRemoveTask ... " );
+
+        FinishAndRemoveTask();
+
+        _logger.Info( this, $"OnCreate, < FinishAndRemoveTask" );
       } );
     }
   }
