@@ -1,4 +1,5 @@
-﻿using Toast.Core.Interfaces;
+﻿using Toast.Core.Commands;
+using Toast.Core.Interfaces;
 
 namespace Toast.Core.Services;
 
@@ -6,15 +7,53 @@ internal sealed class PollingService : IPollingService
 {
   private readonly ILogger _logger;
 
-  public PollingService( ILogger logger )
+  private readonly ICommandProvider _provider;
+  private readonly ICommandReporter _reporter;
+  private readonly CommandDispatcher _dispatcher;
+  
+  public PollingService( ICommandProvider provider,
+      ICommandReporter reporter,
+      CommandDispatcher dispatcher, 
+      ILogger logger )
   {
+    _provider = provider;
+    _reporter = reporter;
+    _dispatcher = dispatcher;
     _logger = logger;
   }
 
-  public Task ExecuteAsync( CancellationToken token )
+  public async Task ExecuteAsync(
+        CancellationToken token )
   {
-    _logger.Info( this, "Polling..." );
+    while ( !token.IsCancellationRequested )
+    {
+      _logger.Info( this, "Polling server..." );
 
-    return Task.CompletedTask;
+      AgentResponse response =
+          await _provider.GetCommandsAsync( token );
+
+      var results = new List<CommandResult>();
+
+      foreach ( var command in response.Commands )
+      {
+        var result =
+            await _dispatcher.ExecuteAsync(
+                command,
+                token );
+
+        results.Add( result );
+      }
+
+      await _reporter.ReportResultsAsync(
+          results,
+          token );
+
+      var delay =
+          Math.Max( 5, response.PollIntervalSeconds );
+
+      await Task.Delay(
+          TimeSpan.FromSeconds( delay ),
+          token );
+    }
   }
 }

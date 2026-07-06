@@ -11,6 +11,6 @@ namespace Toast.Core.Services
 
     public static IPollingService CreatePollingService( ILogger logger ) => new PollingService( logger );
 
-    public static ITestServerAuthorizedRequestService CreateTestServerAuthorizedRequestService( ILogger logger ) => new TestServerAuthorizedRequestService( new SecureClient().SecureDataClient, logger );
+    public static ITestServerAuthorizedRequestService CreateTestServerAuthorizedRequestService( ILogger logger ) => new TestServerAuthorizedRequestService( new SecureClient( logger ).SecureDataClient, logger );
   }
 }
