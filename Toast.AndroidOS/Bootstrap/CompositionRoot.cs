@@ -9,7 +9,7 @@ namespace Toast.AndroidOS.Bootstrap;
 
 internal static class CompositionRoot
 {
-  public static IAgent Create(IAgentStatusListener agentStatusListener)
+  public static IAgent CreateAgent(IAgentStatusListener agentStatusListener)
   {
     ILogger logger = CreateLogger();
 
