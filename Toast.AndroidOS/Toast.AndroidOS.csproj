@@ -16,9 +16,9 @@
 		<!--<TrimMode>full</TrimMode>-->
 		<TrimMode>partial</TrimMode>
 
-		<RuntimeIdentifiers>
+		<!--<RuntimeIdentifiers>
 			android-arm
-		</RuntimeIdentifiers>
+		</RuntimeIdentifiers>-->
 
 	</PropertyGroup>
 

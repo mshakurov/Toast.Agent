@@ -38,7 +38,9 @@ internal static class NotificationHelper
         ?.SetOngoing( true )
         ?.SetOnlyAlertOnce( true )
         ?.SetSilent( true )
-        ?.SetPriority( ( int ) NotificationPriority.Low );
+        ?.SetCategory( NotificationCompat.CategoryService )
+        ?.SetPriority( ( int ) NotificationPriority.Low )
+        ?.SetVisibility( NotificationCompat.VisibilityPublic );
 
     return builder?.Build() ?? new Notification( Resource.Drawable.shuttle, "### Не удалось создать сообщение" );
   }

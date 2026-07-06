@@ -1,4 +1,9 @@
 <resources>
-    <string name="app_name">Toast.AndroidOS</string>
-    <string name="app_text">Hello, Android!</string>
+	<string name="app_name">Toast.AndroidOS</string>
+	<string name="app_text">Hello, Android!</string>
+	<string name="buttonStop">Stop</string>
+	<string name="buttonStart">Start</string>
+	<string name="buttonExit">Close window</string>
+	<string name="setNotificationPermissionsEn">Set up notifications in the settings window to see service activity</string>
+	<string name="setNotificationPermissionsRu">Настройте уведомления в окне настроек, чтобы видеть активность сервиса</string>
 </resources>
