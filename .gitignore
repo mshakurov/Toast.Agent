@@ -58,3 +58,4 @@ nunit-*.xml
 /.vs
 /Toast.Android/.vs
 /Toast.AndroidOS/.vs
+/Toast.Server/.vs/Toast.Server
