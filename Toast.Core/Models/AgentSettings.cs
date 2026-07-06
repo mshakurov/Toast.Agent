@@ -13,6 +13,6 @@ namespace Toast.Core.Models
     /// <summary>
     /// <inheritdoc cref="IAgentSettings.PollingInterval"/>
     /// </summary>
-    public int PollingInterval { get; set; }
+    public int PollingInterval { get; set; } = 10;
   }
 }

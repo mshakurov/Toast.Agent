@@ -15,7 +15,7 @@ namespace Toast.Core
       _logger = agentContext.Logger /*s?? throw new ArgumentNullException( nameof( agentContext.Logger ) )*/;
       _settings = agentContext.Settings /*?? throw new ArgumentNullException( nameof( agentContext.Settings ) )*/;
       _pollingService = new PollingService( _logger );
-      
+
       _logger.Info( this, "Initialized." );
     }
 
@@ -29,7 +29,7 @@ namespace Toast.Core
         {
           await _pollingService.ExecuteAsync( token );
 
-          await Task.Delay( _settings.PollingInterval * 1000, token );
+          await Task.Delay( Math.Max( _settings.PollingInterval, 5 ) * 1000, token );
         }
       }
       catch ( OperationCanceledException )
