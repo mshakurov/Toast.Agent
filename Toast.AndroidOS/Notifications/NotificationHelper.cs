@@ -51,6 +51,17 @@ internal static class NotificationHelper
     Context context,
     AgentStatus status ) => CreateNotification( context, GetTitle(), GetText( status ) );
 
+  public static void UpdateNotification(
+    Context context,
+    AgentStatus status )
+  {
+    NotificationManagerCompat
+        .From( context )
+        ?.Notify(
+            NotificationId,
+            CreateNotification( context, status ) );
+  }
+
   private static string GetText( AgentState state )
   {
     return state switch
