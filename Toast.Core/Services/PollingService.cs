@@ -1,5 +1,6 @@
 ﻿using Toast.Core.Commands;
 using Toast.Core.Interfaces;
+using Toast.Core.Models;
 
 namespace Toast.Core.Services;
 
@@ -11,15 +12,12 @@ internal sealed class PollingService : IPollingService
   private readonly ICommandReporter _reporter;
   private readonly CommandDispatcher _dispatcher;
   
-  public PollingService( ICommandProvider provider,
-      ICommandReporter reporter,
-      CommandDispatcher dispatcher, 
-      ILogger logger )
+  public PollingService( AgentContext context )
   {
-    _provider = provider;
-    _reporter = reporter;
-    _dispatcher = dispatcher;
-    _logger = logger;
+    _provider = context.CommandProvider;
+    _reporter = context.CommandReporter;
+    _dispatcher = new CommandDispatcher( context.CommandHandlers );
+    _logger = context.Logger;
   }
 
   public async Task ExecuteAsync(

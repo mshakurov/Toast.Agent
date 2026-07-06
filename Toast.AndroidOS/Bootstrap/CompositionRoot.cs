@@ -11,20 +11,7 @@ internal static class CompositionRoot
 {
   static ILogger? _singletonLogger;
 
-  public static IAgent CreateAgent(IAgentStatusListener agentStatusListener)
-  {
-    ILogger logger = GetSingletonLogger();
-
-    var context = new AgentContext
-    {
-      Logger = logger,
-      Settings = new AgentSettings(),
-      AgentStatusListener = agentStatusListener,
-      PollingService = CoreFactory.CreatePollingService(logger )
-    };
-
-    return CoreFactory.CreateAgent( context );
-  }
+  public static IAgent CreateAgent( IAgentStatusListener agentStatusListener ) => CoreFactory.CreateAgent( GetSingletonLogger(), new AgentSettings(), agentStatusListener );
 
   public static string GetSystemTag() => nameof( Toast.AndroidOS ).Split( '.' ).Last();
 

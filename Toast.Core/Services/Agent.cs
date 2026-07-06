@@ -5,36 +5,33 @@ namespace Toast.Core.Services
 {
   internal sealed class Agent : IAgent
   {
-    private readonly ILogger _logger;
-    private readonly IAgentSettings _settings;
-    private readonly IAgentStatusListener _agentStatusListener;
-    private readonly IPollingService _pollingService;
+    private readonly AgentContext _agentContext;
+    private readonly PollingService _polling;
 
     public Agent( AgentContext agentContext )
     {
-      _logger = agentContext.Logger ?? throw new ArgumentNullException( nameof( agentContext.Logger ) );
-      _settings = agentContext.Settings ?? throw new ArgumentNullException( nameof( agentContext.Settings ) );
-      _agentStatusListener = agentContext.AgentStatusListener ?? throw new ArgumentNullException( nameof( agentContext.AgentStatusListener ) );
-      _pollingService = agentContext.PollingService ?? throw new ArgumentNullException( nameof( agentContext.PollingService ) );
+      _agentContext = agentContext;
 
-      _logger.Info( this, "Initialized." );
+      _polling = new PollingService( agentContext );
+
+      _agentContext.Logger.Info( this, "Initialized." );
     }
 
     public async Task ExecuteAsync( CancellationToken token )
     {
-      _logger.Info( this, "Started" );
+      _agentContext.Logger.Info( this, "Started" );
 
       try
       {
         while ( !token.IsCancellationRequested )
         {
-          _agentStatusListener.ReportStatus( AgentState.Polling );
+          _agentContext.AgentStatusListener.ReportStatus( AgentState.Polling );
 
-          await _pollingService.ExecuteAsync( token );
+          await _polling.ExecuteAsync( token );
 
-          _agentStatusListener.ReportStatus( AgentState.Waiting );
+          _agentContext.AgentStatusListener.ReportStatus( AgentState.Waiting );
 
-          await Task.Delay( Math.Max( _settings.PollingInterval, 5 ) * 1000, token );
+          await Task.Delay( Math.Max( _agentContext.Settings.PollingInterval, 5 ) * 1000, token );
         }
       }
       catch ( OperationCanceledException )
@@ -42,10 +39,10 @@ namespace Toast.Core.Services
       }
       catch ( Exception ex )
       {
-        _logger.Error( this, $"Error: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}" );
+        _agentContext.Logger.Error( this, $"Error: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}" );
       }
 
-      _logger.Info( this, "Stopped" );
+      _agentContext.Logger.Info( this, "Stopped" );
     }
   }
 

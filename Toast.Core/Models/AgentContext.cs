@@ -11,6 +11,10 @@ namespace Toast.Core.Models
 
     public required IAgentStatusListener AgentStatusListener { get; init; }
 
-    public required IPollingService PollingService { get; init; }
+    public required ICommandProvider CommandProvider { get; init; }
+
+    public required ICommandReporter CommandReporter { get; init; }
+
+    public required IReadOnlyList<ICommandHandler> CommandHandlers { get; init; }
   }
 }
