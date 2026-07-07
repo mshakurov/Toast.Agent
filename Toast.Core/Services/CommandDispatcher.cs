@@ -3,7 +3,7 @@ using Toast.Core.Interfaces;
 
 namespace Toast.Core.Services;
 
-public sealed class CommandDispatcher
+internal sealed class CommandDispatcher
 {
   private readonly IReadOnlyDictionary<string, ICommandHandler> _handlers;
 

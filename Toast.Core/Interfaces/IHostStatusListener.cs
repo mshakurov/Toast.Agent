@@ -2,7 +2,7 @@
 
 namespace Toast.Core.Interfaces
 {
-  public interface IAgentStatusListener
+  public interface IHostStatusListener
   {
     /// <summary>
     /// Метод вызывается для информирования об изменении состояния агента.

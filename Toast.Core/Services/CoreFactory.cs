@@ -8,22 +8,20 @@ namespace Toast.Core.Services
   public static class CoreFactory
   {
 
-    public static IAgent CreateAgent( ILogger logger, AgentSettings settings, IAgentStatusListener agentStatusListener )
+    public static IAgentService CreateAgentService( ILogger logger, IHostSettings settings, IHostStatusListener agentStatusListener )
     {
-      var context = new AgentContext
+      var agentContext = new HostingContext
       {
         Logger = logger,
         Settings = settings,
-        AgentStatusListener = agentStatusListener,
-        CommandHandlers = CommandHandlerFactory.Create(),
-        CommandProvider = new HttpCommandProvider(),
-        CommandReporter = new HttpCommandReporter(),
+        AgentStatusListener = agentStatusListener
       };
 
-      return new Agent( context );
+      return new AgentService( agentContext );
     }
 
-    public static IPollingService CreatePollingService( AgentContext context ) => new PollingService( context );
+    internal static IPollingService CreatePollingService( HostingContext context ) => new PollingService( context );
+
 
     public static ITestServerAuthorizedRequestService CreateTestServerAuthorizedRequestService( ILogger logger ) => new TestServerAuthorizedRequestService( new SecureClient( logger ).SecureDataClient, logger );
   }

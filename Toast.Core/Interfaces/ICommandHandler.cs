@@ -2,7 +2,7 @@
 
 namespace Toast.Core.Interfaces;
 
-public interface ICommandHandler
+internal interface ICommandHandler
 {
   string CommandType { get; }
 

@@ -1,6 +1,6 @@
 ﻿namespace Toast.Core.Interfaces
 {
-  public interface IAgent
+  public interface IAgentService
   {
     Task ExecuteAsync( CancellationToken token );
   }

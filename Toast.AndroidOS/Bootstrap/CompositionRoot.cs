@@ -1,8 +1,6 @@
 ﻿using Toast.AndroidOS.Logging;
-
-using Toast.Core;
+using Toast.AndroidOS.Models;
 using Toast.Core.Interfaces;
-using Toast.Core.Models;
 using Toast.Core.Services;
 
 namespace Toast.AndroidOS.Bootstrap;
@@ -11,7 +9,7 @@ internal static class CompositionRoot
 {
   static ILogger? _singletonLogger;
 
-  public static IAgent CreateAgent( IAgentStatusListener agentStatusListener ) => CoreFactory.CreateAgent( GetSingletonLogger(), new AgentSettings(), agentStatusListener );
+  public static IAgentService CreateAgent( IHostStatusListener agentStatusListener ) => CoreFactory.CreateAgentService( GetSingletonLogger(), new HostSettings(), agentStatusListener );
 
   public static string GetSystemTag() => nameof( Toast.AndroidOS ).Split( '.' ).Last();
 

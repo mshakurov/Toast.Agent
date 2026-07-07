@@ -10,6 +10,8 @@ public enum AgentState
 
   Executing,
 
+  Answering,
+
   Offline,
 
   Error,

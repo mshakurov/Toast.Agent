@@ -1,10 +1,16 @@
 ﻿namespace Toast.Core.Interfaces
 {
-  public interface IAgentSettings
+  public interface IHostSettings
   {
     /// <summary>
     /// Интервал проверки наличия команд в секундах. Если значение равно < 5, то проверка выполняется раз в 5 секунд.
     /// </summary>
-    public int PollingInterval { get; set; }
+    int PollingInterval { get; set; }
+
+    /// <summary>
+    /// Обновляет (сохраняет) настройки на хосте 
+    /// </summary>
+    /// <returns></returns>
+    Task Update();
   }
 }

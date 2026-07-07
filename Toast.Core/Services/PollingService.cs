@@ -1,57 +1,38 @@
-﻿using Toast.Core.Commands;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+using Toast.Core.Commands;
 using Toast.Core.Interfaces;
 using Toast.Core.Models;
 
-namespace Toast.Core.Services;
-
-internal sealed class PollingService : IPollingService
+namespace Toast.Core.Services
 {
-  private readonly ILogger _logger;
-
-  private readonly ICommandProvider _provider;
-  private readonly ICommandReporter _reporter;
-  private readonly CommandDispatcher _dispatcher;
-  
-  public PollingService( AgentContext context )
+  internal class PollingService : IPollingService
   {
-    _provider = context.CommandProvider;
-    _reporter = context.CommandReporter;
-    _dispatcher = new CommandDispatcher( context.CommandHandlers );
-    _logger = context.Logger;
-  }
+    private readonly HostingContext _context;
 
-  public async Task ExecuteAsync(
-        CancellationToken token )
-  {
-    while ( !token.IsCancellationRequested )
+    public PollingService( HostingContext context )
     {
-      _logger.Info( this, "Polling server..." );
+      _context = context;
+    }
 
-      AgentResponse response =
-          await _provider.GetCommandsAsync( token );
+    public Task<AgentResponse> PollAsync( AgentRequest request, CancellationToken token )
+    {
+      _context.Logger.Info( this, "Polling server..." );
+      _context.AgentStatusListener.ReportStatus( AgentState.Polling );
 
-      var results = new List<CommandResult>();
+      return Task.FromResult( new AgentResponse() );
+    }
 
-      foreach ( var command in response.Commands )
-      {
-        var result =
-            await _dispatcher.ExecuteAsync(
-                command,
-                token );
+    public async Task ReportAsync( IReadOnlyList<CommandResult> results, CancellationToken token )
+    {
+      _context.Logger.Info( this, $"Sending {results.Count}  answers ..." );
+      _context.AgentStatusListener.ReportStatus( AgentState.Answering );
 
-        results.Add( result );
-      }
-
-      await _reporter.ReportResultsAsync(
-          results,
-          token );
-
-      var delay =
-          Math.Max( 5, response.PollIntervalSeconds );
-
-      await Task.Delay(
-          TimeSpan.FromSeconds( delay ),
-          token );
+      await Task.CompletedTask;
     }
   }
 }

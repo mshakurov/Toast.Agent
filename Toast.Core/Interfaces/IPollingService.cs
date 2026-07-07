@@ -1,7 +1,15 @@
-﻿namespace Toast.Core.Interfaces
+﻿using Toast.Core.Commands;
+
+namespace Toast.Core.Interfaces
 {
-  public interface IPollingService
+  internal interface IPollingService
   {
-    Task ExecuteAsync( CancellationToken token );
+    Task<AgentResponse> PollAsync(
+        AgentRequest request,
+        CancellationToken token );
+
+    Task ReportAsync(
+        IReadOnlyList<CommandResult> results,
+        CancellationToken token );
   }
 }

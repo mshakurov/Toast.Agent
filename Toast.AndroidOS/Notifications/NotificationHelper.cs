@@ -67,6 +67,7 @@ internal static class NotificationHelper
       AgentState.Starting => "Starting...",
       AgentState.Waiting => "Waiting for next poll",
       AgentState.Polling => "Polling server...",
+      AgentState.Answering => "Answering to server...",
       AgentState.Executing => "Executing commands...",
       AgentState.Offline => "Server unavailable",
       AgentState.Error => "Execution error",

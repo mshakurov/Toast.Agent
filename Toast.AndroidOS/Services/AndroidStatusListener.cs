@@ -4,7 +4,7 @@ using Toast.Core.Models;
 
 namespace Toast.AndroidOS.Services
 {
-  internal sealed class AndroidStatusListener : IAgentStatusListener
+  internal sealed class AndroidStatusListener : IHostStatusListener
   {
     private readonly Context _context;
     private readonly ILogger? _logger;
