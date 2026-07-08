@@ -21,12 +21,12 @@ namespace Toast.Core.Services
       _logger = logger;
     }
 
-    public async Task<List<DataItem>> LoadItemsFromServerAsync()
+    public async Task<List<TestDataItem>> LoadItemsFromServerAsync()
     {
       try
       {
         // Архитектурно чистый вызов. О JWT, логине и шифровании TLS заботится HttpClient!
-        var items = await _secureClient.GetFromJsonAsync<List<DataItem>>( "api/data/items" );
+        var items = await _secureClient.GetFromJsonAsync<List<TestDataItem>>( "api/data/items" );
         return items ?? [];
       }
       catch ( Exception ex )
@@ -34,7 +34,7 @@ namespace Toast.Core.Services
         // Обработка ошибок сети
         _logger.Error(this, $"Ошибка загрузки данных: {ex}" );
 
-        return new List<DataItem>();
+        return new List<TestDataItem>();
       }
     }
   }

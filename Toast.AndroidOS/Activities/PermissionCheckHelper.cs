@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using Toast.AndroidOS.Bootstrap;
 using Toast.Core.Interfaces;
 
 namespace Toast.AndroidOS.Activities
@@ -49,7 +50,7 @@ namespace Toast.AndroidOS.Activities
             Android.Widget.Toast.MakeText( _owner, Resource.String.setNotificationPermissionsEn, ToastLength.Long )?.Show();
 
             var intent = new Intent( Android.Provider.Settings.ActionApplicationDetailsSettings );
-            intent.SetData( Android.Net.Uri.Parse( $"package:{_owner.PackageName}" ) );
+            intent.SetData( Android.Net.Uri.Parse( $"package:{CompositionRoot.PackageName}" ) );
             _owner.StartActivity( intent );
           }
         }
@@ -84,7 +85,7 @@ namespace Toast.AndroidOS.Activities
             Android.Widget.Toast.MakeText( _owner, Resource.String.setNetworkCheckPermissionsEn, ToastLength.Long )?.Show();
 
             var intent = new Intent( Android.Provider.Settings.ActionApplicationDetailsSettings );
-            intent.SetData( Android.Net.Uri.Parse( $"package:{_owner.PackageName}" ) );
+            intent.SetData( Android.Net.Uri.Parse( $"package:{CompositionRoot.PackageName}" ) );
             _owner.StartActivity( intent );
           }
         }

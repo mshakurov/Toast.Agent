@@ -29,8 +29,20 @@ internal sealed class CommandDispatcher
       };
     }
 
-    return await handler.ExecuteAsync(
+    try
+    {
+      return await handler.ExecuteAsync(
         command,
         cancellationToken );
+    }
+    catch ( Exception ex )
+    {
+      return new CommandResult
+      {
+        CommandId = command.Id,
+        Success = false,
+        Message = $"Error executing: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}"
+      };
+    }
   }
 }

@@ -1,4 +1,5 @@
 
+
 using Toast.AndroidOS.Bootstrap;
 using Toast.AndroidOS.Services;
 using Toast.Core.Interfaces;
@@ -69,8 +70,29 @@ namespace Toast.AndroidOS.Activities
       //  нопка Exit Ц закрывает окно
       SetupBtnExit();
 
+      //  нопка Settings Ц открывает окно настроек
+      SetupBtnSettings();
+
       //  нопка Test1 Ц тест 1
       SetupBtnTest1();
+    }
+
+    private void SetupBtnSettings()
+    {
+      var btnSettings = FindViewById<Button>( Resource.Id.buttonSets );
+      if ( btnSettings != null )
+      {
+        btnSettings.Click += ( sender, e ) =>
+        {
+          _logger.Info( this, $"buttonSets, Creating Intent" );
+          var intent = new Intent( this, typeof( SettingsActivity ) );
+          _logger.Info( this, $"buttonSets, Intent created. Calling StartActivity..." );
+          StartActivity( intent );
+          _logger.Info( this, $"buttonSets < StartActivity" );
+        };
+      }
+      else
+        _logger.Error( this, "# Button buttonSets not found" );
     }
 
     private void SetupBtnTest1()

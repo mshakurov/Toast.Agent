@@ -9,4 +9,5 @@
 	<string name="setNetworkCheckPermissionsEn">Configure the network scan permission in the settings window</string>
 	<string name="setNetworkCheckPermissionsRu">Настройте право проверки сети в окне настроек</string>
 	<string name="buttonTest1">Test1</string>
+	<string name="buttonSets">Settings</string>
 </resources>

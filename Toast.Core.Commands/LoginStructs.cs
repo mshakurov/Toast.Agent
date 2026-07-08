@@ -8,5 +8,5 @@ namespace Toast.Core.Commands
 {
   public record LoginModel( string Email, string Password );
   public record AuthResponse( string Token, DateTime Expiration );
-  public record DataItem( int Id, string Name, string Value );
+  public record TestDataItem( int Id, string Name, string Value );
 }

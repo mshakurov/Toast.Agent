@@ -21,6 +21,9 @@ namespace Toast.Core.Services
 
     public Task<AgentResponse> PollAsync( AgentRequest request, CancellationToken token )
     {
+      if ( _context.Settings.LastSuccessfulServerIndex > _context.Settings.Servers.Length - 1 )
+        _context.Settings.LastSuccessfulServerIndex = 0;
+
       _context.Logger.Info( this, "Polling server..." );
       _context.AgentStatusListener.ReportStatus( AgentState.Polling );
 

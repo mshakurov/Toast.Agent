@@ -23,30 +23,28 @@
 				android:layout_width="0dp"
 				android:layout_height="wrap_content"
 				android:layout_weight="1"
-				android:text="@string/buttonStart"
-				android:focusable="true"
-				android:focusableInTouchMode="true"/>
+				android:text="@string/buttonStart"/>
 
 		<Button
 				android:id="@+id/buttonStop"
 				android:layout_width="0dp"
 				android:layout_height="wrap_content"
 				android:layout_weight="1"
-				android:text="@string/buttonStop"
-				android:focusable="true"
-				android:focusableInTouchMode="true"/>
+				android:text="@string/buttonStop"/>
+
+		<Button
+				android:id="@+id/buttonSets"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:layout_weight="1"
+				android:text="@string/buttonSets"/>
 
 		<Button
 				android:id="@+id/buttonTest1"
 				android:layout_width="0dp"
 				android:layout_height="wrap_content"
 				android:layout_weight="1"
-				android:text="@string/buttonTest1"
-				android:focusable="true"
-				android:focusableInTouchMode="true"/>
-
-
-
+				android:text="@string/buttonTest1"/>
 
 		<!-- Последняя кнопка выхода -->
 		<Button

@@ -1,0 +1,110 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+	<!-- 1. ВЕРХНЯЯ ПАНЕЛЬ: Фиксируем строго по верхнему краю экрана -->
+	<LinearLayout
+			android:id="@+id/buttonsLayout"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_alignParentTop="true"
+			android:orientation="horizontal"
+			android:weightSum="3"
+			android:padding="8dp">
+
+		<Button
+				android:id="@+id/btnSave"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:layout_weight="1"
+				android:text="Save"
+				android:layout_marginEnd="4dp"/>
+
+		<Button
+				android:id="@+id/btnReload"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:layout_weight="1"
+				android:text="Reload"
+				android:layout_marginEnd="4dp"/>
+
+		<Button
+				android:id="@+id/btnClose"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:layout_weight="1"
+				android:text="Close"/>
+	</LinearLayout>
+
+	<!-- 2. СКРОЛЛЕР: Начинается СТРОГО ПОД кнопками и идет до низа экрана -->
+	<ScrollView
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:layout_below="@id/buttonsLayout"
+			android:layout_alignParentBottom="true"
+			android:layout_marginTop="12dp">
+
+		<!-- Внутренний контейнер ScrollView ОБЯЗАН быть wrap_content -->
+		<LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:orientation="vertical">
+
+			<TextView
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:text="Настройки хоста"
+					android:textSize="20sp"
+					android:textStyle="bold"
+					android:layout_marginBottom="16dp"/>
+
+			<TextView
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:text="Интервал опроса (сек, минимум 5):" />
+
+			<EditText
+					android:id="@+id/editPollingInterval"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:inputType="number"
+					android:layout_marginBottom="24dp" />
+
+			<!-- Заголовок серверов + Кнопка "+ Добавить" -->
+			<RelativeLayout
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:layout_marginBottom="8dp">
+
+				<TextView
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:text="Список серверов:"
+						android:textStyle="bold"
+						android:textSize="16sp"
+						android:layout_centerVertical="true"/>
+
+				<Button
+						android:id="@+id/btnAddServer"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:layout_alignParentEnd="true"
+						android:text="+ Добавить"
+						android:textSize="12sp"
+						/>
+			</RelativeLayout>
+
+			<!-- Динамический контейнер серверов -->
+			<LinearLayout
+					android:id="@+id/serversContainer"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:orientation="vertical" />
+
+		</LinearLayout>
+	</ScrollView>
+</RelativeLayout>

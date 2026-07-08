@@ -23,10 +23,10 @@ namespace Toast.Core.Services
       {
         while ( !token.IsCancellationRequested )
         {
-          var serverConnection = CoreFactory.CreatePollingService( _context );
+          var pollingService = CoreFactory.CreatePollingService( _context );
 
           AgentResponse response =
-              await serverConnection.PollAsync( new AgentRequest(), token );
+              await pollingService.PollAsync( new AgentRequest(), token );
 
           _context.Logger.Info( this, $"Executing {response.Commands.Count} commands..." );
           _context.AgentStatusListener.ReportStatus( AgentState.Executing );
@@ -43,12 +43,12 @@ namespace Toast.Core.Services
             results.Add( result );
           }
 
-          await serverConnection.ReportAsync(
+          await pollingService.ReportAsync(
               results,
               token );
 
           var delay =
-              Math.Max( 5, _context.Settings.PollingInterval );
+              Math.Max( (ushort)5, _context.Settings.PollingInterval );
 
           _context.Logger.Info( this, "Waiting..." );
           _context.AgentStatusListener.ReportStatus( AgentState.Waiting );
