@@ -65,9 +65,14 @@ namespace Toast.Core.Services
       {
         _context.Logger.Error( this, $"Error: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}" );
       }
+      finally
+      {
+        _context.AgentStatusListener.ReportStatus( AgentState.Stopped );
+      }
 
       _context.Logger.Info( this, "Stopped" );
     }
+
   }
 
 }
