@@ -59,3 +59,4 @@ nunit-*.xml
 /Toast.Android/.vs
 /Toast.AndroidOS/.vs
 /Toast.Server/.vs/Toast.Server
+/Toast.Server/.vs/ProjectEvaluation
