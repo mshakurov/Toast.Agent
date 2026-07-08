@@ -1,5 +1,7 @@
 
 
+using Java.Lang;
+
 using Toast.AndroidOS.Bootstrap;
 using Toast.AndroidOS.Services;
 using Toast.Core.Interfaces;
@@ -118,7 +120,13 @@ namespace Toast.AndroidOS.Activities
               btnTest1.Enabled = true;
 
               if ( textView != null )
-                textView.Text = $"Result ({result.Count}):" + System.Environment.NewLine + string.Join( System.Environment.NewLine, result.Select( r => $"- {r.Id}|{r.Name}|{r.Value}" ) );
+              {
+                StringBuilder lines = new();
+                lines.Append( $"Result ({result.Items.Count}):" + System.Environment.NewLine + string.Join( System.Environment.NewLine, result.Items.Select( r => $"- {r.Id}|{r.Name}|{r.Value}" ) ) );
+                if ( !string.IsNullOrEmpty( result.Exception ) )
+                  lines.Append( System.Environment.NewLine + $"Exception: {result.Exception}" );  
+                textView.Text = lines.ToString();
+              }
             } );
           } );
         };
