@@ -12,6 +12,8 @@ namespace Toast.AndroidOS.Services
     private readonly CancellationToken _token;
     private readonly State _pendingState;
 
+    public AgentStatus? CurrentState => _pendingState.Get().PendingStatus;
+
     public AndroidStatusListener( Context context, ILogger? logger, CancellationToken token )
     {
       _context = context;
