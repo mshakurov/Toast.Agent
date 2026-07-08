@@ -10,6 +10,6 @@ namespace Toast.Core.Interfaces
 {
   public interface ITestServerAuthorizedRequestService
   {
-    Task<List<TestDataItem>> LoadItemsFromServerAsync();
+    Task<(List<TestDataItem> Items, string? Exception)> LoadItemsFromServerAsync();
   }
 }
