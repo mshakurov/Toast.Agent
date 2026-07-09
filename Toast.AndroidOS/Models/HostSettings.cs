@@ -17,8 +17,8 @@ public class HostSettings : IHostSettings, ICloneable
 
   public RemoteServer[] Servers { get; set; } =
     [
-      new RemoteServer { HostURL = "https://77.51.228.159", Port = 7101, APIBasePath = "api/data/items", LoginModel = new LoginModel("mshakurov@yandex.ru", "VorgeN2010$") },
-      new RemoteServer { HostURL = "https://192.168.1.252", Port = 7101, APIBasePath = "api/data/items", LoginModel = new LoginModel("mshakurov@yandex.ru", "VorgeN2010$") }
+      new RemoteServer { HostURL = "https://77.51.228.159", Port = 7101, APIBasePath = RemoteServer.C_APIBasePath, LoginModel = new LoginModel("mshakurov@yandex.ru", "VorgeN2010$") },
+      new RemoteServer { HostURL = "https://192.168.1.252", Port = 7101, APIBasePath = RemoteServer.C_APIBasePath, LoginModel = new LoginModel("mshakurov@yandex.ru", "VorgeN2010$") }
     ];
 
   public ushort LastSuccessfulServerIndex { get; set; } = 0;

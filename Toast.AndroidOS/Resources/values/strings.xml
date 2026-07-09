@@ -8,6 +8,9 @@
 	<string name="setNotificationPermissionsRu">Настройте уведомления в окне настроек, чтобы видеть активность сервиса</string>
 	<string name="setNetworkCheckPermissionsEn">Configure the network scan permission in the settings window</string>
 	<string name="setNetworkCheckPermissionsRu">Настройте право проверки сети в окне настроек</string>
-	<string name="buttonTest1">Test1</string>
+	<string name="buttonTestRequest">Test Request</string>
+	<string name="buttonTestShowMessage">Show Message</string>
+	<string name="buttonTestShowMessageService">ShowMsg Service</string>
 	<string name="buttonSets">Settings</string>
+	<string name="buttonShowMessageOKText">OK</string>
 </resources>

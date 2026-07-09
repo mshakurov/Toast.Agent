@@ -1,3 +1,5 @@
+﻿
+
 
 
 using Java.Lang;
@@ -63,20 +65,68 @@ namespace Toast.AndroidOS.Activities
     {
       textView = FindViewById<TextView>( Resource.Id.app_text );
 
-      // ������ Start � ��������� ������
+      // Кнопка Start – запускает сервис
       SetupBtnStart();
 
-      // ������ Stop � ������������� ������
+      // Кнопка Stop – останавливает сервис
       SetupBtnStop();
 
-      // ������ Exit � ��������� ����
+      // Кнопка Exit – закрывает окно
       SetupBtnExit();
 
-      // ������ Settings � ��������� ���� ��������
+      // Кнопка Settings – открывает окно настроек
       SetupBtnSettings();
 
-      // ������ Test1 � ���� 1
-      SetupBtnTest1();
+      // Кнопка Test Request – тест запроса
+      SetupBtnTestRequest();
+
+      // Кнопка Test Show Message – тест показа сообщения
+      SetupBtnTestShowMessage();
+
+      // Кнопка тестирования сервис показа сообщений
+      SetupBtnTestShowMsgService();
+    }
+
+    private void SetupBtnTestShowMsgService()
+    {
+      var btnTestShowMessageService = FindViewById<Button>( Resource.Id.buttonTestShowMessageService );
+      if ( btnTestShowMessageService != null )
+      {
+        btnTestShowMessageService.Click += ( sender, e ) =>
+        {
+          _logger.Info( this, $"btnTestShowMessageService, Creating Intent" );
+
+          new ShowMessageService().StartShowMessage( "Тестовое сообщение\nс переносом строки", "♥♥♥", 10, exception =>
+          {
+            _logger.Info( this, $"btnTestShowMessageService: onResult('{exception}')" );
+          } );
+
+          _logger.Info( this, $"btnTestShowMessageService < StartActivity" );
+        };
+      }
+      else
+        _logger.Error( this, "# Button btnTestShowMessageService not found" );
+    }
+
+    private void SetupBtnTestShowMessage()
+    {
+      var btnTestShowMessage = FindViewById<Button>( Resource.Id.buttonTestShowMessage );
+      if ( btnTestShowMessage != null )
+      {
+        btnTestShowMessage.Click += ( sender, e ) =>
+        {
+          _logger.Info( this, $"buttonTestShowMessage, Creating Intent" );
+          var intent = new Intent( this, typeof( ShowMessageActivity ) );
+          intent.PutExtra( ShowMessageActivity.C_IntentExtraText, "Тестовое сообщение\nс переносом строки" );
+          intent.PutExtra( ShowMessageActivity.C_IntentExtraDuration, 10 );
+          intent.PutExtra( ShowMessageActivity.C_IntentExtraTitle, "♥♥♥" );
+          _logger.Info( this, $"buttonTestShowMessage, Intent created. Calling StartActivity..." );
+          StartActivity( intent );
+          _logger.Info( this, $"buttonTestShowMessage < StartActivity" );
+        };
+      }
+      else
+        _logger.Error( this, "# Button buttonTestShowMessage not found" );
     }
 
     private void SetupBtnSettings()
@@ -97,27 +147,26 @@ namespace Toast.AndroidOS.Activities
         _logger.Error( this, "# Button buttonSets not found" );
     }
 
-    private void SetupBtnTest1()
+    private void SetupBtnTestRequest()
     {
-      var btnTest1 = FindViewById<Button>( Resource.Id.buttonTest1 );
-      if ( btnTest1 != null )
+      var btnTestRequest = FindViewById<Button>( Resource.Id.buttonTestRequest );
+      if ( btnTestRequest != null )
       {
-        btnTest1.Click += ( sender, e ) =>
+        btnTestRequest.Click += ( sender, e ) =>
         {
-          btnTest1.Enabled = false;
+          btnTestRequest.Enabled = false;
           Task.Factory.StartNew( () =>
           {
-            _logger.Info( this, $"buttonTest1, Creating test service ... " );
+            _logger.Info( this, $"buttonTestRequest, Creating test service ... " );
 
             var srv = CompositionRoot.CreateTestServerAuthorizedRequestService( _logger );
 
-            _logger.Info( this, $"buttonTest1, Requesting test data..." );
-
+            _logger.Info( this, $"buttonTestRequest, Requesting test data..." );
             var result = srv.LoadItemsFromServerAsync().Result;
 
             this.RunOnUiThread( () =>
             {
-              btnTest1.Enabled = true;
+              btnTestRequest.Enabled = true;
 
               if ( textView != null )
               {

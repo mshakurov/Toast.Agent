@@ -12,6 +12,8 @@ namespace Toast.AndroidOS.Services;
 
 public class SettingsService( string package_name, ILogger logger )
 {
+  object locker = new();
+
   // Имя файла настроек внутри приватной папки Android приложения
   private string PrefsFileName => $"{package_name}.settings";
   private const string SettingsKey = "host_settings_json";
@@ -19,39 +21,42 @@ public class SettingsService( string package_name, ILogger logger )
   // Считывание настроек
   public HostSettings LoadSettings()
   {
-    // 1. Получаем доступ к системным SharedPreferences (режим Private защищает данные от других приложений)
-    var prefs = Application.Context.GetSharedPreferences( PrefsFileName, FileCreationMode.Private );
-
-    if ( prefs == null )
+    lock ( locker )
     {
-      LogError("# Недоступны SharedPreferences");
+      // 1. Получаем доступ к системным SharedPreferences (режим Private защищает данные от других приложений)
+      var prefs = Application.Context.GetSharedPreferences( PrefsFileName, FileCreationMode.Private );
 
-      // На случай, если что-то пошло не так
-      return new HostSettings();
-    }
+      if ( prefs == null )
+      {
+        LogError( "# Недоступны SharedPreferences" );
 
-    // 2. Достаем сохраненную JSON-строку
-    string? json = prefs.GetString( SettingsKey, null );
+        // На случай, если что-то пошло не так
+        return new HostSettings();
+      }
 
-    // 3. Если данных еще нет, возвращаем объект по умолчанию
-    if ( string.IsNullOrWhiteSpace( json ) )
-    {
-      LogError( "# Не удалось считать настройки" );
+      // 2. Достаем сохраненную JSON-строку
+      string? json = prefs.GetString( SettingsKey, null );
 
-      return new HostSettings();
-    }
+      // 3. Если данных еще нет, возвращаем объект по умолчанию
+      if ( string.IsNullOrWhiteSpace( json ) )
+      {
+        LogError( "# Не удалось считать настройки" );
 
-    try
-    {
-      // 4. Десериализуем строку обратно в объект C#
-      return JsonSerializer.Deserialize<HostSettings>( json ) ?? new HostSettings();
-    }
-    catch(Exception exc)
-    {
-      LogError( $"# Десериал настр: {exc.Message}{( exc.InnerException != null ? $", {exc.InnerException.Message}" : string.Empty )}{( exc.InnerException?.InnerException != null ? $", exc.InnerException.InnerException.Message" : string.Empty )}" );
+        return new HostSettings();
+      }
 
-      // На случай, если вы измените структуру класса в будущем
-      return new HostSettings();
+      try
+      {
+        // 4. Десериализуем строку обратно в объект C#
+        return JsonSerializer.Deserialize<HostSettings>( json ) ?? new HostSettings();
+      }
+      catch ( Exception exc )
+      {
+        LogError( $"# Десериал настр: {exc.Message}{( exc.InnerException != null ? $", {exc.InnerException.Message}" : string.Empty )}{( exc.InnerException?.InnerException != null ? $", exc.InnerException.InnerException.Message" : string.Empty )}" );
+
+        // На случай, если вы измените структуру класса в будущем
+        return new HostSettings();
+      }
     }
   }
 
@@ -60,67 +65,73 @@ public class SettingsService( string package_name, ILogger logger )
   {
     if ( settings == null ) return;
 
-    var prefs = Application.Context.GetSharedPreferences( PrefsFileName, FileCreationMode.Private );
-
-    if ( prefs == null )
+    lock ( locker )
     {
-      LogError( "# Недоступны SharedPreferences" );
+      var prefs = Application.Context.GetSharedPreferences( PrefsFileName, FileCreationMode.Private );
 
-      // На случай, если что-то пошло не так
-      return;
-    }
+      if ( prefs == null )
+      {
+        LogError( "# Недоступны SharedPreferences" );
 
-    // 1. Открываем транзакцию на редактирование
-    using var editor = prefs.Edit();
+        // На случай, если что-то пошло не так
+        return;
+      }
 
-    if ( editor == null )
-    {
-      LogError( "# Не редактируются SharedPreferences" );
+      // 1. Открываем транзакцию на редактирование
+      using var editor = prefs.Edit();
 
-      // На случай, если что-то пошло не так
-      return;
-    }
+      if ( editor == null )
+      {
+        LogError( "# Не редактируются SharedPreferences" );
 
-    try
-    {
-      // 2. Сериализуем объект в JSON
-      string json = JsonSerializer.Serialize( settings );
+        // На случай, если что-то пошло не так
+        return;
+      }
 
-      // 3. Записываем строку в память
-      editor.PutString( SettingsKey, json );
+      try
+      {
+        // 2. Сериализуем объект в JSON
+        string json = JsonSerializer.Serialize( settings );
 
-      // 4. Применяем изменения асинхронно в фоне (не блокирует UI)
-      editor.Apply();
-    }
-    catch ( Exception exc )
-    {
-      LogError( $"# Не сохран настр: {exc.Message}{( exc.InnerException != null ? $", {exc.InnerException.Message}" : string.Empty )}{( exc.InnerException?.InnerException != null ? $", exc.InnerException.InnerException.Message" : string.Empty )}" );
+        // 3. Записываем строку в память
+        editor.PutString( SettingsKey, json );
+
+        // 4. Применяем изменения асинхронно в фоне (не блокирует UI)
+        editor.Apply();
+      }
+      catch ( Exception exc )
+      {
+        LogError( $"# Не сохран настр: {exc.Message}{( exc.InnerException != null ? $", {exc.InnerException.Message}" : string.Empty )}{( exc.InnerException?.InnerException != null ? $", exc.InnerException.InnerException.Message" : string.Empty )}" );
+      }
     }
   }
 
   // Полное удаление настроек (при логауте или сбросе приложения)
   public void ClearSettings()
   {
-    var prefs = Application.Context.GetSharedPreferences( PrefsFileName, FileCreationMode.Private );
-    if ( prefs == null )
+    lock ( locker )
     {
-      // На случай, если что-то пошло не так
-      return;
+      var prefs = Application.Context.GetSharedPreferences( PrefsFileName, FileCreationMode.Private );
+      if ( prefs == null )
+      {
+        // На случай, если что-то пошло не так
+        return;
+      }
+      using var editor = prefs.Edit();
+      if ( editor == null )
+      {
+        // На случай, если что-то пошло не так
+        return;
+      }
+      editor.Remove( SettingsKey );
+      editor.Apply();
     }
-    using var editor = prefs.Edit();
-    if ( editor == null )
-    {
-      // На случай, если что-то пошло не так
-      return;
-    }
-    editor.Remove( SettingsKey );
-    editor.Apply();
   }
 
-  public void LogError(string error)
+  void LogError( string error )
   {
     logger.Error( Application.Context, error );
-    Android.Widget.Toast.MakeText( Application.Context,error, ToastLength.Long )?.Show();
+    Android.Widget.Toast.MakeText( Application.Context, error, ToastLength.Long )?.Show();
   }
 }
 

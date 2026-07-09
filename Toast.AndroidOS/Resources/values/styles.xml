@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Стиль всех кнопок -->
+    <style name="AppButtonStyle" parent="@android:style/Widget.Button">
+        <item name="android:textSize">12sp</item>
+
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+			
+        <item name="android:paddingLeft">2dp</item>
+        <item name="android:paddingRight">2dp</item>
+        <item name="android:paddingTop">2dp</item>
+        <item name="android:paddingBottom">2dp</item>
+    </style>
+
+    <!-- Тема приложения -->
+    <style name="AppTheme" parent="@android:style/Theme.DeviceDefault.Light">
+        <item name="android:buttonStyle">@style/AppButtonStyle</item>
+    </style>
+
+</resources>

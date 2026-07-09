@@ -3,8 +3,9 @@
   <PropertyGroup>
     <SelectedDevice>phone_xxh-dpi_6_7in_-_api_35</SelectedDevice>
     <SelectedPlatformGroup>Emulator</SelectedPlatformGroup>
-    <ActiveDebugProfile>Phone Xxh-DPI 6.7in - API 35 (Android 15.0 — API 35)</ActiveDebugProfile>
-    <DefaultDevice>phone_xxh-dpi_6_7in_-_api_35</DefaultDevice>
+    <ActiveDebugProfile>nexus_4_-_api_31</ActiveDebugProfile>
+    <DefaultDevice>nexus_4_-_api_31</DefaultDevice>
+    <AndroidDesignerPreferredTheme>AppTheme</AndroidDesignerPreferredTheme>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebuggerFlavor>ProjectDebugger</DebuggerFlavor>

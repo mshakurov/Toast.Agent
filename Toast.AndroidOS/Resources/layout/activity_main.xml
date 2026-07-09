@@ -16,7 +16,7 @@
 			android:layout_height="wrap_content"
 			android:orientation="horizontal"
 			android:layout_alignParentTop="true"
-			android:padding="8dp">
+			android:padding="2dp">
 
 		<Button
 				android:id="@+id/buttonStart"
@@ -39,12 +39,48 @@
 				android:layout_weight="1"
 				android:text="@string/buttonSets"/>
 
+	</LinearLayout>
+	
+	<!-- Контейнер для кнопок вверху экрана -->
+	<LinearLayout
+			android:id="@+id/buttonContainer2"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="horizontal"
+			android:layout_below="@id/buttonContainer"
+			android:padding="4dp">
+
 		<Button
-				android:id="@+id/buttonTest1"
+				android:id="@+id/buttonTestRequest"
 				android:layout_width="0dp"
 				android:layout_height="wrap_content"
 				android:layout_weight="1"
-				android:text="@string/buttonTest1"/>
+				android:text="@string/buttonTestRequest"/>
+
+		<Button
+				android:id="@+id/buttonTestShowMessage"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:layout_weight="1"
+				android:text="@string/buttonTestShowMessage"/>
+
+		<Button
+				android:id="@+id/buttonTestShowMessageService"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:layout_weight="1"
+				android:text="@string/buttonTestShowMessageService"/>
+
+	</LinearLayout>
+
+	<!-- Контейнер для кнопок вверху экрана -->
+	<LinearLayout
+			android:id="@+id/buttonContainer3"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="horizontal"
+			android:layout_below="@id/buttonContainer"
+			android:padding="4dp">
 
 		<!-- Последняя кнопка выхода -->
 		<Button
@@ -63,6 +99,7 @@
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:layout_centerInParent="true"
+			android:layout_below="@id/buttonContainer2"
 			android:text="@string/app_text"
     />
 
