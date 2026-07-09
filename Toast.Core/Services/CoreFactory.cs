@@ -8,13 +8,14 @@ namespace Toast.Core.Services
   public static class CoreFactory
   {
 
-    public static IAgentService CreateAgentService( ILogger logger, IHostSettings settings, IHostStatusListener agentStatusListener )
+    public static IAgentService CreateAgentService( ILogger logger, IHostSettings settings, IHostStatusListener agentStatusListener, IHostShowMessage hostShowMessage )
     {
       var agentContext = new HostingContext
       {
         Logger = logger,
         Settings = settings,
-        AgentStatusListener = agentStatusListener
+        AgentStatusListener = agentStatusListener,
+        HostShowMessage = hostShowMessage
       };
 
       return new AgentService( agentContext );

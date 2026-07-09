@@ -12,12 +12,12 @@ namespace Toast.Core.Services
 {
   internal class CommandHandlerFactory
   {
-    public static IReadOnlyList<ICommandHandler> CreateDefault(HostingContext context)
+    public static IReadOnlyList<ICommandHandler> CreateDefault( IAgentServiceContext serviceContext, HostingContext context )
     {
       return
       [
-          new ShowMessageCommandHandler(context),
-          new ChangeSettingsCommandHandler(context),
+          new ShowMessageCommandHandler(serviceContext, context),
+          new ChangeSettingsCommandHandler(serviceContext, context),
       ];
     }
   }

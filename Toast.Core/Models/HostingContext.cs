@@ -10,5 +10,7 @@ namespace Toast.Core.Models
     public required IHostSettings Settings { get; init; }
 
     public required IHostStatusListener AgentStatusListener { get; init; }
+
+    public required IHostShowMessage HostShowMessage { get; init; }
   }
 }

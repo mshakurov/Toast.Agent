@@ -6,18 +6,19 @@ namespace Toast.Core.Services;
 internal sealed class CommandDispatcher
 {
   private readonly IReadOnlyDictionary<string, ICommandHandler> _handlers;
+  private readonly CancellationToken cancellationToken;
 
   public CommandDispatcher(
-      IEnumerable<ICommandHandler> handlers )
+      IEnumerable<ICommandHandler> handlers, CancellationToken cancellationToken )
   {
     _handlers = handlers.ToDictionary(
         x => x.CommandType,
         StringComparer.OrdinalIgnoreCase );
+    this.cancellationToken = cancellationToken;
   }
 
   public async Task<CommandResult> ExecuteAsync(
-      AgentCommand command,
-      CancellationToken cancellationToken )
+      AgentCommand command )
   {
     if ( !_handlers.TryGetValue( command.Type, out var handler ) )
     {

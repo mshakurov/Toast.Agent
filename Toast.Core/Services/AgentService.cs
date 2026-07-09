@@ -1,4 +1,6 @@
-﻿using Toast.Core.Commands;
+﻿using System.Collections.Concurrent;
+
+using Toast.Core.Commands;
 using Toast.Core.Interfaces;
 using Toast.Core.Models;
 
@@ -6,12 +8,14 @@ namespace Toast.Core.Services
 {
   internal sealed class AgentService : IAgentService
   {
-    private readonly HostingContext _context;
+    private HostingContext _context;
+    private readonly AgentServiceContext _serviceContext;
+    private readonly ConcurrentQueue<CommandResult> _postponedResults = new();
 
     public AgentService( HostingContext agentContext )
     {
       _context = agentContext;
-
+      _serviceContext = new( this );
       _context.Logger.Info( this, "Initialized." );
     }
 
@@ -23,39 +27,7 @@ namespace Toast.Core.Services
       {
         while ( !token.IsCancellationRequested )
         {
-          var pollingService = CoreFactory.CreatePollingService( _context );
-
-          AgentResponse response =
-              await pollingService.PollAsync( new AgentRequest(), token );
-
-          _context.Logger.Info( this, $"Executing {response.Commands.Count} commands..." );
-          _context.AgentStatusListener.ReportStatus( AgentState.Executing );
-
-          var results = new List<CommandResult>();
-          var dispatcher = new CommandDispatcher( CommandHandlerFactory.CreateDefault( _context ) );
-          foreach ( var command in response.Commands )
-          {
-            var result =
-                await dispatcher.ExecuteAsync(
-                    command,
-                    token );
-
-            results.Add( result );
-          }
-
-          await pollingService.ReportAsync(
-              results,
-              token );
-
-          var delay =
-              Math.Max( (ushort)5, _context.Settings.PollingInterval );
-
-          _context.Logger.Info( this, "Waiting..." );
-          _context.AgentStatusListener.ReportStatus( AgentState.Waiting );
-
-          await Task.Delay(
-              TimeSpan.FromSeconds( delay ),
-              token );
+          await ProcessIterationAsync( token );
         }
       }
       catch ( OperationCanceledException )
@@ -71,6 +43,58 @@ namespace Toast.Core.Services
       }
 
       _context.Logger.Info( this, "Stopped" );
+    }
+
+    async Task ProcessIterationAsync( CancellationToken token )
+    {
+      var pollingService = CoreFactory.CreatePollingService( _context );
+
+      AgentResponse response =
+          await pollingService.PollAsync( new AgentRequest(), token );
+
+      _context.Logger.Info( this, $"Executing {response.Commands.Count} commands..." );
+      _context.AgentStatusListener.ReportStatus( AgentState.Executing );
+
+      var results = new List<CommandResult>( _postponedResults );
+      var dispatcher = new CommandDispatcher( CommandHandlerFactory.CreateDefault( _serviceContext, _context ), token );
+      foreach ( var command in response.Commands )
+      {
+        var result =
+            await dispatcher.ExecuteAsync( command );
+
+        results.Add( result );
+      }
+
+      await pollingService.ReportAsync(
+          results,
+          token );
+
+      var delay =
+          Math.Max( ( ushort ) 5, _context.Settings.PollingInterval );
+
+      _context.Logger.Info( this, "Waiting..." );
+      _context.AgentStatusListener.ReportStatus( AgentState.Waiting );
+
+      await Task.Delay(
+          TimeSpan.FromSeconds( delay ),
+          token );
+    }
+
+    class AgentServiceContext( AgentService service ) : IAgentServiceContext
+    {
+      // особый случай - изменение настроек агента, локально, из команды. хост тоже может изменить настройки, но чтобы они вступили в силу, хост должен перезапустить агента. а локально агент может изменить настройки и продолжить работу с ними.
+      public void UpdateSettings( IHostSettings settings )
+      {
+        service._context = new HostingContext { Settings = settings, Logger = service._context.Logger, AgentStatusListener = service._context.AgentStatusListener, HostShowMessage = service._context.HostShowMessage };
+
+        service._context.Logger.Info( this, "Settings changed locally." );
+      }
+
+      // добавление результата выполнения команды в очередь на отправку на сервер для длительно выполнящихся команд. 
+      public void AddCommandResult( CommandResult result )
+      {
+        service._postponedResults.Enqueue( result );
+      }
     }
 
   }

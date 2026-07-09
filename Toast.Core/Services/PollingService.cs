@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http.Json;
 using System.Text;
 using System.Threading.Tasks;
 
 using Toast.Core.Commands;
 using Toast.Core.Interfaces;
 using Toast.Core.Models;
+using Toast.Core.Networking;
 
 namespace Toast.Core.Services
 {
@@ -26,6 +28,10 @@ namespace Toast.Core.Services
 
       _context.Logger.Info( this, "Polling server..." );
       _context.AgentStatusListener.ReportStatus( AgentState.Polling );
+
+      //_context.Settings.
+      var client = new SecureClient( _context.Logger ).SecureDataClient;
+      client.GetFromJsonAsync<List<TestDataItem>>( "api/data/commands" );
 
       return Task.FromResult( new AgentResponse() );
     }
