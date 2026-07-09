@@ -14,10 +14,10 @@ public class JwtAuthorizationHandler : DelegatingHandler
   protected override async Task<HttpResponseMessage> SendAsync( HttpRequestMessage request, CancellationToken cancellationToken )
   {
     // 1. Получаем свежий токен (класс AuthService сам решит, обновить его или взять из кэша)
-    string token = await _authService.GetValidTokenAsync();
+    var authToken = await _authService.GetValidTokenAsync();
 
     // 2. Внедряем токен в заголовок запроса
-    request.Headers.Authorization = new AuthenticationHeaderValue( "Bearer", token );
+    request.Headers.Authorization = new AuthenticationHeaderValue( "Bearer", authToken.Token );
 
     // 3. Отправляем запрос дальше по цепочке
     return await base.SendAsync( request, cancellationToken );

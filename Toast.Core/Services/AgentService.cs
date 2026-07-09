@@ -27,7 +27,28 @@ namespace Toast.Core.Services
       {
         while ( !token.IsCancellationRequested )
         {
-          await ProcessIterationAsync( token );
+          try
+          {
+            await ProcessIterationAsync( token );
+          }
+          catch ( OperationCanceledException )
+          {
+            break;
+          }
+          catch ( Exception ex )
+          {
+            _context.Logger.Error( this, $"ProcessIterationAsync Error: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}" );
+          }
+
+          var delay =
+              Math.Max( ( ushort ) 5, _context.Settings.PollingInterval );
+
+          _context.Logger.Info( this, "Waiting..." );
+          _context.AgentStatusListener.ReportStatus( AgentState.Waiting );
+
+          await Task.Delay(
+              TimeSpan.FromSeconds( delay ),
+              token );
         }
       }
       catch ( OperationCanceledException )
@@ -35,7 +56,7 @@ namespace Toast.Core.Services
       }
       catch ( Exception ex )
       {
-        _context.Logger.Error( this, $"Error: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}" );
+        _context.Logger.Error( this, $"Common AgentService Error: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}" );
       }
       finally
       {
@@ -50,7 +71,7 @@ namespace Toast.Core.Services
       var pollingService = CoreFactory.CreatePollingService( _context );
 
       AgentResponse response =
-          await pollingService.PollAsync( new AgentRequest(), token );
+          await pollingService.PollAsync( new AgentRequest() { AgentId = _context.Settings.HostUID }, token );
 
       _context.Logger.Info( this, $"Executing {response.Commands.Count} commands..." );
       _context.AgentStatusListener.ReportStatus( AgentState.Executing );
@@ -67,16 +88,6 @@ namespace Toast.Core.Services
 
       await pollingService.ReportAsync(
           results,
-          token );
-
-      var delay =
-          Math.Max( ( ushort ) 5, _context.Settings.PollingInterval );
-
-      _context.Logger.Info( this, "Waiting..." );
-      _context.AgentStatusListener.ReportStatus( AgentState.Waiting );
-
-      await Task.Delay(
-          TimeSpan.FromSeconds( delay ),
           token );
     }
 

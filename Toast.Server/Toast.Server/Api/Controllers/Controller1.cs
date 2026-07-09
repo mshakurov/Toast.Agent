@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using System.Security.Claims;
+
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,7 +20,8 @@ namespace Toast.Server.Api.Controllers
       var secureData = new List<TestDataItem>
         {
             new(1, "Товар 1", "Секретное значение А"),
-            new(2, "Товар 2", "Секретное значение Б")
+            new(2, "Товар 2", "Секретное значение Б"),
+            new(3, "Пользователь", User.FindFirstValue(ClaimTypes.NameIdentifier)?.ToString() ?? string.Empty),
         };
       return Ok( secureData );
     }

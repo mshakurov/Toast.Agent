@@ -55,6 +55,7 @@
 				android:orientation="vertical">
 
 			<TextView
+					android:id="@+id/settingsHeader"
 					android:layout_width="match_parent"
 					android:layout_height="wrap_content"
 					android:text="Настройки хоста"
@@ -63,9 +64,36 @@
 					android:layout_marginBottom="16dp"/>
 
 			<TextView
+					android:id="@+id/viewUID"
 					android:layout_width="match_parent"
 					android:layout_height="wrap_content"
-					android:text="Интервал опроса (сек, минимум 5):" />
+					android:layout_below="@id/settingsHeader"
+					android:layout_alignParentLeft="true"
+					android:layout_toLeftOf="@+id/editUID"
+					android:text="UID:" />
+
+			<TextView
+					android:id="@+id/editUID"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:textIsSelectable="true" 
+					android:layout_below="@id/viewUID"
+					android:layout_alignParentRight="true"/>
+
+			<TextView
+					android:id="@+id/editHARDWARE"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:textIsSelectable="true" 
+					android:layout_below="@id/editUID"
+					android:layout_alignParentRight="true"/>
+
+			<TextView
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:layout_below="@id/editUID"
+					android:text="Интервал опроса (сек, минимум 5):"
+					android:layout_alignParentTop="true"/>
 
 			<EditText
 					android:id="@+id/editPollingInterval"

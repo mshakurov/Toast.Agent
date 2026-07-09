@@ -2,6 +2,7 @@
 using Toast.AndroidOS.Logging;
 using Toast.AndroidOS.Models;
 using Toast.AndroidOS.Services;
+using Toast.Core.Commands;
 using Toast.Core.Interfaces;
 using Toast.Core.Services;
 
@@ -23,7 +24,7 @@ internal static class CompositionRoot
 
   public static ILogger GetSingletonLogger() => _singletonLogger ??= new AndroidLogger( GetSystemTag() );
 
-  public static ITestServerAuthorizedRequestService CreateTestServerAuthorizedRequestService( ILogger logger ) => CoreFactory.CreateTestServerAuthorizedRequestService( GetSingletonLogger() );
+  public static ITestServerAuthorizedRequestService CreateTestServerAuthorizedRequestService( string baseServerUrl, LoginModel credentials, ILogger logger ) => CoreFactory.CreateTestServerAuthorizedRequestService( baseServerUrl, credentials, GetSingletonLogger() );
 
   public static SettingsService GetSingletonSettingsService() => _singletonSettingsService ??= new SettingsService( PackageName, GetSingletonLogger() );
 

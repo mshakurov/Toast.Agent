@@ -18,6 +18,8 @@ namespace Toast.Core.Commands
 
     public int Port { get; set; } = 7101;
 
+    public string BaseUrl => $"{HostURL}:{Port}";
+
     public string APIBasePath { get; set; } = RemoteServer.C_APIBasePath;
 
     public LoginModel? LoginModel { get; set; }

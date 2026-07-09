@@ -11,23 +11,26 @@ namespace Toast.Core.Services;
 public class AuthService
 {
   private readonly HttpClient _authClient;
-  private string? _cachedToken;
-  private DateTime _tokenExpiration;
+  private AuthResponse? _cachedAuthToken;
 
   // Сюда можно зашить дефолтные учетки или передавать динамически
-  private readonly LoginModel _credentials = new( "mshakurov@yandex.ru", "VorgeN2010$" );
+  private readonly LoginModel _credentials;
 
-  public AuthService( HttpClient authClient )
+  public AuthResponse? LastAuthToken => _cachedAuthToken;
+
+  public AuthService( LoginModel credentials, AuthResponse? cachedAuthToken, HttpClient authClient )
   {
     _authClient = authClient;
+    _credentials = credentials;
+    _cachedAuthToken = cachedAuthToken;
   }
 
-  public async Task<string> GetValidTokenAsync()
+  public async Task<AuthResponse> GetValidTokenAsync()
   {
     // Если токен есть и он еще действует (с запасом в 1 минуту), возвращаем его
-    if ( !string.IsNullOrEmpty( _cachedToken ) && _tokenExpiration > DateTime.UtcNow.AddMinutes( 1 ) )
+    if ( _cachedAuthToken != null && !string.IsNullOrEmpty( _cachedAuthToken.Token ) && _cachedAuthToken.Expiration > DateTime.UtcNow.AddMinutes( 1 ) )
     {
-      return _cachedToken;
+      return _cachedAuthToken;
     }
 
     // Иначе — прозрачно делаем запрос на авторизацию
@@ -38,9 +41,8 @@ public class AuthService
       var authData = await response.Content.ReadFromJsonAsync<AuthResponse>();
       if ( authData != null )
       {
-        _cachedToken = authData.Token;
-        _tokenExpiration = authData.Expiration;
-        return _cachedToken;
+        _cachedAuthToken = authData;
+        return _cachedAuthToken;
       }
       else
         throw new HttpRequestException( "Ошибка автоматической авторизации устройства (Ответ пустой)." );

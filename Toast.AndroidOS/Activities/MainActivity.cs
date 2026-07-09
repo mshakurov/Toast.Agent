@@ -5,6 +5,7 @@
 using Java.Lang;
 
 using Toast.AndroidOS.Bootstrap;
+using Toast.AndroidOS.Models;
 using Toast.AndroidOS.Services;
 using Toast.Core.Interfaces;
 
@@ -159,10 +160,35 @@ namespace Toast.AndroidOS.Activities
           {
             _logger.Info( this, $"buttonTestRequest, Creating test service ... " );
 
-            var srv = CompositionRoot.CreateTestServerAuthorizedRequestService( _logger );
+            string text;
 
-            _logger.Info( this, $"buttonTestRequest, Requesting test data..." );
-            var result = srv.LoadItemsFromServerAsync().Result;
+            var servers = new HostSettings().GetValidServers();
+            if ( servers.Length == 0 )
+              text = $"# Не найден ни один правильно настроенный сервер";
+            else
+            {
+              try
+              {
+                var server = servers.Last();
+
+                var srv = CompositionRoot.CreateTestServerAuthorizedRequestService( server.BaseUrl, server.LoginModel!, _logger );
+
+                _logger.Info( this, $"buttonTestRequest, Requesting test data..." );
+                var result = srv.LoadItemsFromServerAsync().Result;
+                StringBuilder lines = new();
+                lines.Append( $"Server: {server.GetKey()}." );
+                lines.Append( System.Environment.NewLine + $"Result ({result.Items.Count}):" + System.Environment.NewLine + string.Join( System.Environment.NewLine, result.Items.Select( r => $"- {r.Id}|{r.Name}|{r.Value}" ) ) );
+                if ( !string.IsNullOrEmpty( result.Exception ) )
+                  lines.Append( System.Environment.NewLine + $"Exception: {result.Exception}" );
+                text = lines.ToString() ?? string.Empty;
+              }
+              catch ( System.Exception ex )
+              {
+                text = $"Exception: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}";
+              }
+            }
+
+            _logger.Error( this, text );
 
             this.RunOnUiThread( () =>
             {
@@ -170,11 +196,7 @@ namespace Toast.AndroidOS.Activities
 
               if ( textView != null )
               {
-                StringBuilder lines = new();
-                lines.Append( $"Result ({result.Items.Count}):" + System.Environment.NewLine + string.Join( System.Environment.NewLine, result.Items.Select( r => $"- {r.Id}|{r.Name}|{r.Value}" ) ) );
-                if ( !string.IsNullOrEmpty( result.Exception ) )
-                  lines.Append( System.Environment.NewLine + $"Exception: {result.Exception}" );  
-                textView.Text = lines.ToString();
+                textView.Text = text;
               }
             } );
           } );

@@ -31,9 +31,16 @@ public class AuthController : ControllerBase
   [HttpPost( "login" )]
   public async Task<IActionResult> Login( [FromBody] LoginModel model )
   {
-    // 1. Проверяем пользователя через встроенный Identity
+    // 1.Ищем пользователя по Email
+    var user = await _userManager.FindByEmailAsync( model.Email );
+    if ( user == null )
+    {
+      return Unauthorized( new { Message = "Неверный логин или пароль" } );
+    }
+
+    // 2. Проверяем пользователя через встроенный Identity
     var result = await _signInManager.CheckPasswordSignInAsync(
-        await _userManager.FindByEmailAsync( model.Email ) ?? new ApplicationUser(),
+        user,
         model.Password,
         lockoutOnFailure: false );
 
@@ -42,14 +49,18 @@ public class AuthController : ControllerBase
       return Unauthorized( new { Message = "Неверный логин или пароль" } );
     }
 
-    // 2. Если успешно, генерируем JWT-токен
+    // 3. Если успешно, генерируем JWT-токен
     var tokenHandler = new JwtSecurityTokenHandler();
     var key = Encoding.UTF8.GetBytes( _configuration["Jwt:Key"]! );
     var expires = DateTime.UtcNow.AddDays( 7 ); // Срок действия токена
 
     var tokenDescriptor = new SecurityTokenDescriptor
     {
-      Subject = new ClaimsIdentity( new[] { new Claim( ClaimTypes.Name, model.Email ) } ),
+      Subject = new ClaimsIdentity( new[]
+      {
+        new Claim(ClaimTypes.NameIdentifier, user.Id), // ТЕПЕРЬ ID ТАКЖЕ ЗАКЛЮЧЕН В ТОКЕНЕ!
+        new Claim( ClaimTypes.Name, model.Email ),
+      } ),
       Expires = expires,
       Issuer = _configuration["Jwt:Issuer"],
       Audience = _configuration["Jwt:Audience"],

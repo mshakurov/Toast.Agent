@@ -10,9 +10,6 @@
 		<Folder Include="Configuration\" />
 	</ItemGroup>
 	<ItemGroup>
-		<Folder Include="Utilities\" />
-	</ItemGroup>
-	<ItemGroup>
 	  <ProjectReference Include="..\Toast.Core.Commands\Toast.Core.Commands.csproj" />
 	</ItemGroup>
 

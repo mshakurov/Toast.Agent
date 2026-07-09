@@ -12,6 +12,7 @@ using Toast.AndroidOS.Bootstrap;
 using Toast.Core.Commands;
 using Toast.AndroidOS.Models;
 using System.Diagnostics.CodeAnalysis;
+using Toast.AndroidOS.Services;
 
 
 namespace Toast.AndroidOS.Activities
@@ -21,6 +22,8 @@ namespace Toast.AndroidOS.Activities
   public class SettingsActivity : Activity
   {
     private EditText? _editPollingInterval;
+    private TextView? _editUID;
+    private TextView? _editHARDWARE;
     private LinearLayout? _serversContainer;
     private Button? _btnSave;
     private Button? _btnReload;
@@ -55,11 +58,13 @@ namespace Toast.AndroidOS.Activities
       LoadSettingsIntoUI();
     }
 
-    [MemberNotNull( nameof( _editPollingInterval ), nameof( _serversContainer ), nameof( _btnSave ), nameof( _btnReload ), nameof( _btnClose ), nameof( _btnAddServer ) )]
+    [MemberNotNull( nameof( _editPollingInterval ), nameof( _serversContainer ), nameof( _btnSave ), nameof( _btnReload ), nameof( _btnClose ), nameof( _btnAddServer ), nameof( _editUID ), nameof( _editHARDWARE ) )]
     private void FindControls()
     {
       // Инициализация элементов UI
       _editPollingInterval = FindViewById<EditText>( Resource.Id.editPollingInterval ) ?? throw new KeyNotFoundException( "EditText for polling interval not found" );
+      _editUID = FindViewById<TextView>( Resource.Id.editUID ) ?? throw new KeyNotFoundException( "EditText for UID not found" );
+      _editHARDWARE = FindViewById<TextView>( Resource.Id.editHARDWARE ) ?? throw new KeyNotFoundException( "EditText for HARDWARE not found" );
       _serversContainer = FindViewById<LinearLayout>( Resource.Id.serversContainer ) ?? throw new KeyNotFoundException( "LinearLayout for servers container not found" );
       _btnSave = FindViewById<Button>( Resource.Id.btnSave ) ?? throw new KeyNotFoundException( "Button for save not found" );
       _btnReload = FindViewById<Button>( Resource.Id.btnReload ) ?? throw new KeyNotFoundException( "Button for reload not found" );
@@ -80,6 +85,10 @@ namespace Toast.AndroidOS.Activities
 
       // 2. Заполняем поле интервала опроса
       _editPollingInterval!.Text = settings.PollingInterval.ToString();
+
+      _editUID!.Text = settings.HostUID;
+
+      _editHARDWARE!.Text = DeviceHardwareProviderService.GetDeviceHumanReadableName();
 
       // 3. Динамически строим форму для каждого сервера из массива
       if ( settings.Servers != null )

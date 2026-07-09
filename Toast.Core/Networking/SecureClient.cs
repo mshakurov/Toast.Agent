@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using Toast.Core.Commands;
 using Toast.Core.Interfaces;
 using Toast.Core.Services;
 
@@ -11,12 +12,13 @@ namespace Toast.Core.Networking
 {
   internal class SecureClient
   {
-    string baseServerUrl = "https://192.168.1.252:7101";
-
     public HttpClient SecureDataClient;
     private readonly ILogger logger;
+    private readonly AuthService authService;
 
-    public SecureClient( Interfaces.ILogger logger )
+    public AuthResponse? LastAuthToken => authService.LastAuthToken;
+
+    public SecureClient( string baseServerUrl, LoginModel credentials, AuthResponse? lastAuthToken, Interfaces.ILogger logger )
     {
       this.logger = logger;
       HttpClientHandler httpClientHandler = new()
@@ -27,7 +29,7 @@ namespace Toast.Core.Networking
 
       // 1. Клиент чисто для аутентификации (ему не нужны заголовки)
       var baseClient = new HttpClient( httpClientHandler ) { BaseAddress = new Uri( baseServerUrl ) };
-      var authService = new AuthService( baseClient );
+      authService = new AuthService( credentials, lastAuthToken, baseClient );
 
       // 2. Собираем защищенный клиент, передавая ему наш кастомный Handler
       var jwtHandler = new JwtAuthorizationHandler( authService )

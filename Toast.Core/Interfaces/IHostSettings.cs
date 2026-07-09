@@ -20,6 +20,11 @@ namespace Toast.Core.Interfaces
     ushort LastSuccessfulServerIndex { get; set; }
 
     /// <summary>
+    /// Уникальный идентификатор устройства
+    /// </summary>
+    string HostUID { get; }
+
+    /// <summary>
     /// Обновляет (сохраняет) настройки на хосте 
     /// </summary>
     /// <returns></returns>
