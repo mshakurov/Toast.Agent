@@ -8,7 +8,7 @@
 
       try
       {
-        data = command.Parameters.Deserialize<TTarget>();
+        data = JsonSerializer.Deserialize<TTarget>( command.JsonParameters );
       }
       catch ( Exception ex )
       {

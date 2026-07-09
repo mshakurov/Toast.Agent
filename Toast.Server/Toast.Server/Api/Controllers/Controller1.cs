@@ -1,10 +1,12 @@
 ﻿using System.Security.Claims;
+using System.Text.Json;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using Toast.Core.Commands;
+using Toast.Core.Commands.CommandData;
 
 namespace Toast.Server.Api.Controllers
 {
@@ -24,6 +26,17 @@ namespace Toast.Server.Api.Controllers
             new(3, "Пользователь", User.FindFirstValue(ClaimTypes.NameIdentifier)?.ToString() ?? string.Empty),
         };
       return Ok( secureData );
+    }
+
+    [HttpPost( "commands" )]
+    public IActionResult GetCommands( [FromBody] AgentRequest request )
+    {
+      List<AgentCommand> commands =
+        [
+          new () { Id = Guid.NewGuid(), Type = CommandTypes.ShowMessage,  JsonParameters = JsonSerializer.Serialize( new ShowMessageData { Title = "Hallow device!", Message  = $"From server! You are: {request.AgentId}", Duration = 11, WaitIfShow = false  } ) }
+        ];
+
+      return Ok( new AgentResponse { Commands = commands } );
     }
   }
 }

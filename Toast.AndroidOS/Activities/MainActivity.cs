@@ -174,7 +174,9 @@ namespace Toast.AndroidOS.Activities
                 var srv = CompositionRoot.CreateTestServerAuthorizedRequestService( server.BaseUrl, server.LoginModel!, _logger );
 
                 _logger.Info( this, $"buttonTestRequest, Requesting test data..." );
+                
                 var result = srv.LoadItemsFromServerAsync().Result;
+                
                 StringBuilder lines = new();
                 lines.Append( $"Server: {server.GetKey()}." );
                 lines.Append( System.Environment.NewLine + $"Result ({result.Items.Count}):" + System.Environment.NewLine + string.Join( System.Environment.NewLine, result.Items.Select( r => $"- {r.Id}|{r.Name}|{r.Value}" ) ) );

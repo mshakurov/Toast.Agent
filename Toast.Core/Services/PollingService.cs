@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Json;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -35,6 +36,13 @@ namespace Toast.Core.Services
 
       foreach ( var server in servers )
       {
+        //var checkError = await CheckHostPort( server.s.HostURL!, server.s.Port, token );
+        //if ( checkError != null )
+        //{
+        //  _context.Logger.Warning( this, $"# Connect to {server.s.HostURL}:{server.s.Port} failed ({server.s.GetKey()})." );
+        //  continue;
+        //}
+
         _context.Logger.Info( this, $"Polling server {server.s.GetKey()}..." );
         _context.AgentStatusListener.ReportStatus( AgentState.Polling );
 
@@ -51,19 +59,21 @@ namespace Toast.Core.Services
         }
         catch ( Exception ex )
         {
-          secureClient = new SecureClient( server.s.BaseUrl, server.s.LoginModel!, null, _context.Logger );
-
-          server.s.LastAuthToken = null;
+          setsChanged = server.s.LastAuthToken != null;
           setsChanged = true;
           exceptions.Add( ex );
 
-          try
+          if ( ex is UnauthorizedException exUnA )
           {
-            agentResponse = await GetAgentResponse( secureClient.SecureDataClient, request, token );
-          }
-          catch ( Exception ex2 )
-          {
-            exceptions.Add( ex2 );
+            secureClient = new SecureClient( server.s.BaseUrl, server.s.LoginModel!, null, _context.Logger );
+            try
+            {
+              agentResponse = await GetAgentResponse( secureClient.SecureDataClient, request, token );
+            }
+            catch ( Exception ex2 )
+            {
+              exceptions.Add( ex2 );
+            }
           }
         }
 
@@ -85,6 +95,8 @@ namespace Toast.Core.Services
 
         if ( agentResponse != null )
           return agentResponse;
+
+        _context.Logger.Error( this, $"Ошибка запроса с сервера '{server.s.GetKey()}': {string.Join( ", ", exceptions.Select( ex => $"# {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}" ) )}" );
       }
 
       return new AgentResponse();
@@ -92,7 +104,29 @@ namespace Toast.Core.Services
 
     public async Task<AgentResponse?> GetAgentResponse( HttpClient client, AgentRequest request, CancellationToken token )
     {
-      return await client.GetFromJsonAsync<AgentResponse>( "api/data/commands", token );
+      //var iDbg = 1;
+      //if (iDbg == 1)
+      //{
+      //  var srv = CoreFactory.CreateTestServerAuthorizedRequestService( "https://192.168.1.252", new LoginModel( "mshakurov@yandex.ru", "SuperPassword2026$" ), _context.Logger );
+
+      //  return new AgentResponse();
+      //}
+
+      HttpResponseMessage response = await client.PostAsJsonAsync( "api/data/commands", request, token );
+
+      if ( response.IsSuccessStatusCode )
+      {
+        var agentResponse = await response.Content.ReadFromJsonAsync<AgentResponse>();
+        if ( agentResponse == null )
+          throw new Exception( "Сервер вернул null" );
+        return agentResponse;
+      }
+      else
+      {
+        // Обработка ошибок (например, 401 Unauthorized или 500 Server Error)
+        var errorContent = await response.Content.ReadAsStringAsync();
+        throw new Exception( $"Ошибка сервера: {response.StatusCode}. Детали: {errorContent}" );
+      }
     }
 
     public async Task ReportAsync( IReadOnlyList<CommandResult> results, CancellationToken token )
@@ -101,6 +135,26 @@ namespace Toast.Core.Services
       _context.AgentStatusListener.ReportStatus( AgentState.Answering );
 
       await Task.CompletedTask;
+    }
+
+    public async Task<string?> CheckHostPort( string hostUrl, int port, CancellationToken token )
+    {
+      TcpClient client = new();
+      try
+      {
+        var taskConnect = client.ConnectAsync( hostUrl, port, token ).AsTask();
+        await Task.WhenAny( client.ConnectAsync( hostUrl, port, token ).AsTask(), Task.Delay( TimeSpan.FromSeconds( 3 ), token ) );
+        return taskConnect.IsCompleted ? null : $"Timeout";
+      }
+      catch ( Exception ex )
+      {
+        return $"{ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}";
+      }
+      finally
+      {
+        try { client.Close(); } catch { }
+        try { client.Dispose(); } catch { }
+      }
     }
   }
 }

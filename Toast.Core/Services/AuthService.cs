@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net.Http.Json;
 using Toast.Core.Commands;
+using Toast.Core.Models;
 
 namespace Toast.Core.Services;
 
@@ -45,9 +46,9 @@ public class AuthService
         return _cachedAuthToken;
       }
       else
-        throw new HttpRequestException( "Ошибка автоматической авторизации устройства (Ответ пустой)." );
+        throw new UnauthorizedException( "Ошибка автоматической авторизации устройства (Ответ пустой)." );
     }
 
-    throw new HttpRequestException( "Ошибка автоматической авторизации устройства." );
+    throw new UnauthorizedException( $"Ошибка автоматической авторизации устройства: {response.StatusCode}: {response.ReasonPhrase}." );
   }
 }
