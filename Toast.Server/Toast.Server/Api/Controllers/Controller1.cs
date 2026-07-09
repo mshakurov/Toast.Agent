@@ -15,7 +15,7 @@ namespace Toast.Server.Api.Controllers
     [HttpGet( "items" )]
     public IActionResult GetProtectedData()
     {
-      var secureData = new List<DataItem>
+      var secureData = new List<TestDataItem>
         {
             new(1, "Товар 1", "Секретное значение А"),
             new(2, "Товар 2", "Секретное значение Б")
