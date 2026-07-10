@@ -104,6 +104,11 @@ namespace Toast.Server.Data
       return added;
     }
 
+    internal async Task SetResults( AgentResult agentResult )
+    {
+      throw new NotImplementedException();
+    }
+
     public class State
     {
       public ShowMessageData ShowMessageData { get; set; } = new();
