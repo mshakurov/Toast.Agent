@@ -1,0 +1,71 @@
+﻿@using Toast.Server.Data
+@using Toast.Server.Components.Shared.MyTable;
+@inject ApplicationDbContext dbContext;
+
+<div class="card">
+  <div class="card-title">
+    DBTables
+  </div>
+  <div class="card-body">
+    <div class="form-control">
+      <div class="mb-3">
+        <textarea class="form-control" rows="3">@typeListInfo</textarea>
+      </div>
+      <div class="mb-3">
+        <label for="type" class="form-label">Selected type:</label>
+        <select id="type" class="form-select" aria-label="Default select example" @onchange=@SelectedTypeChanged>
+          @foreach ( var _type in types )
+          {
+            var type = _type;
+            var selected = type == selectedType?.Type ? "true" : string.Empty;
+            <option value="@type.ClrType.FullName" @selected>
+              @($"{type.Name} (Flds:{type.GetProperties().Count()})")
+            </option>
+          }
+        </select>
+      </div>
+      @if ( selectedType != null )
+      {
+        <div class="mb-3">
+          <button class="btn btn-outline-info btn-sm" @onclick="@LoadDataFromUI" title="Обновить"><i class="bi bi-arrow-clockwise"></i></button>
+          <TableMy TItem="object" Items="selectedType.Rows" Compact Border>
+            <TableHeader>
+              <th>Del</th>
+              @foreach ( var propName in selectedType.GetPropNames() )
+              {
+                <th>@propName</th>
+              }
+            </TableHeader>
+            <TableRow>
+              @{
+                var current = context;
+              }
+              <td>
+                <button class="btn btn-outline-danger btn-sm" 
+                  @onclick="@(async () => await DeleteRow(current))" 
+                  title="Удалить запись"
+                  disabled="@selectedType.Deleting">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+              @foreach ( var propName in selectedType.GetPropNames() )
+              {
+                var text = current.GetType().GetProperty( propName )?.GetValue( current )?.ToString();
+                <td style="max-width:30rem">@text</td>
+              }
+            </TableRow>
+          </TableMy>
+        </div>
+      }
+    </div>
+
+    @if ( alert != null )
+    {
+      <textarea class="form-control text-bg-warning" rows="5" @bind="@alert"></textarea>
+    }
+
+  </div>
+</div>
+
+
+

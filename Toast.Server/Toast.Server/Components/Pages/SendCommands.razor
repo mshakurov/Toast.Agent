@@ -1,7 +1,76 @@
-﻿<h4>SendCommands</h4>
+﻿@using Toast.Core.Commands.CommandData
+@using Toast.Server.Api
+@using Toast.Server.Components.Pages.Commands
+@using Toast.Server.Data
+@inject CommandService commandService;
 
+<h4>SendCommands</h4>
 
+<SelectClients @bind-SelectedClients="@commandService.Current.SelectedCommandClients" />
+
+<ShowMessageCommand @bind-Data="@commandService.Current.ShowMessageData">
+  <button type="button" class="btn btn-primary btn-sm" disabled="@sending" onclick="@(async () => await SendCommand( commandService.Current.ShowMessageData ))">Send</button>
+</ShowMessageCommand>
+
+@if ( alert != null )
+{
+  <textarea class="form-control text-bg-warning" rows="5" @bind="@alert"></textarea>
+}
 
 @code {
 
+  string? alert = null;
+  bool sending = false;
+
+  protected override async Task OnInitializedAsync()
+  {
+    await base.OnInitializedAsync();
+
+  }
+
+  async Task SendCommand( object? data )
+  {
+    await Task.CompletedTask;
+
+    if ( @commandService.Current.SelectedCommandClients.Count == 0 )
+    {
+      ShowAlert( "Не выбраны клиенты!" );
+      return;
+    }
+
+    sending = true;
+    StateHasChanged();
+
+    if ( data is ShowMessageData showMessageData )
+      _ = Task.Run( async () =>
+      {
+        try
+        {
+          await Task.Delay( 10000 );
+          await commandService.SendAsync( @commandService.Current.SelectedCommandClients, showMessageData.CloneEx() );
+        }
+        catch ( Exception ex )
+        {
+          alert = $"Ошибка отправки команд: {ex}";
+          StateHasChanged();
+        }
+        finally
+        {
+          sending = false;
+          StateHasChanged();
+        }
+      } );
+  }
+
+  void ShowAlert( string msg, int seconds = 5 )
+  {
+    alert = msg;
+    StateHasChanged();
+
+    Task.Delay( TimeSpan.FromSeconds( seconds ) ).ContinueWith( _ =>
+    {
+      alert = null;
+      _ = InvokeAsync( StateHasChanged );
+    } );
+  }
 }

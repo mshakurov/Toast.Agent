@@ -1,0 +1,70 @@
+﻿@using Toast.Core.Commands.CommandData
+@using Toast.Server.Api
+
+<div class="card">
+  <div class="card-title">
+    ShowMessage Command
+  </div>
+  <div class="card-body">
+    <form>
+      <div class="mb-3">
+        <label for="title" class="form-label">@nameof( ShowMessageData.Title )</label>
+        <input type="text" class="form-control" id="title" aria-describedby="titleHelp" @bind-value=@_data.Title @bind-value:event="oninput" @onchange="NotifyParent" @bind-value:after="NotifyParent">
+        <div id="titleHelp" class="form-text">Заголовок сообщения на клиенте</div>
+      </div>
+      <div class="mb-3">
+        <label for="message" class="form-label">@nameof( ShowMessageData.Message )</label>
+        <textarea class="form-control" id="message" rows="3" @bind="@_data.Message" @bind:event="oninput" @onchange="NotifyParent" @bind:after="NotifyParent"></textarea>
+      </div>
+      <div class="mb-3 form-check">
+        <input type="checkbox" class="form-check-input" id="waitIfShow" @bind="@_data.WaitIfShow" @bind:event="oninput" @onchange="NotifyParent" @bind:after="NotifyParent">
+        <label class="form-check-label" for="waitIfShow">@nameof( ShowMessageData.WaitIfShow )</label>
+      </div>
+      @if (ChildContent != null)
+      {
+        <hr/>
+        @ChildContent
+      }
+    </form>
+  </div>
+</div>
+
+@* <textarea class="form-control" rows="5" @bind="@log"></textarea> *@
+
+@code {
+
+  [Parameter]
+  public ShowMessageData? Data { get; set; }
+
+  // Шаблон имени строго: ИмяПараметра + Changed
+  [Parameter]
+  public EventCallback<ShowMessageData> DataChanged { get; set; }
+
+  [Parameter]
+  public RenderFragment? ChildContent { get; set; }
+
+  ShowMessageData _data = new();
+
+  // string log = string.Empty;
+
+  protected override void OnParametersSet()
+  {
+    base.OnParametersSet();
+
+    // log += "\n" + $"> P: {Data}, _data: ({_data})";
+    _data = Data.Clone() ?? new();
+    // log += "\n" + $"< P: _data: ({_data})";
+  }
+
+  private async Task NotifyParent()
+  {
+    // log += "\n" + $"> N: {Data}, _data: ({_data})";
+
+    // Передаем сам объект. Так как свойства Name/Phone уже изменились
+    // через @bind, родитель сразу получит свежие данные.
+    await DataChanged.InvokeAsync( _data );
+
+    // log += "\n" + $"< N: {Data}, _data: ({_data})";
+  }
+
+}

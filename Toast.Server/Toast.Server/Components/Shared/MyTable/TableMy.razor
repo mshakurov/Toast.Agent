@@ -1,0 +1,82 @@
+﻿@inherits TableBase<TItem>
+@typeparam TItem
+
+@if ( TableRow == null )
+{
+  <div class="alert alert-danger" role="alert">
+    ### Не задан Tag: @(nameof( TableRow ))
+  </div>
+}
+else
+{
+  <table class="table-responsive table-sm @CompactClass table-hover @(Border ? "table-bordered" : string.Empty)">
+    <thead>
+      <tr>@TableHeader</tr>
+    </thead>
+    <tbody>
+      @if ( ItemList == null || ItemList.Length == 0 )
+      {
+        @if ( Loading )
+        {
+          @if ( ItemsLoadingText != null )
+          {
+            @ItemsLoadingText
+          }
+        }
+        else
+        if ( ItemsNotFoundText != null )
+        {
+          @ItemsNotFoundText
+        }
+      }
+      else
+      {
+        @if ( Loading )
+        {
+          @if ( ItemsLoadingText != null )
+          {
+            @ItemsLoadingText
+          }
+        }
+        @foreach ( var item in ItemList )
+        {
+          <tr>@TableRow( item )</tr>
+          @if ( AfterRow != null )
+          {
+            @AfterRow( item )
+          }
+        }
+      }
+    </tbody>
+  </table>
+  @if ( ItemList != null && ItemList.Length > 0 
+  && (
+    PagerVisibleAlways || IsPagerNeeded 
+  ))
+  {
+    <ul class="pagination pagination-sm">
+      <li class="page-item @PagerPrevDisabledClass"><span class="page-link" title="@($"Предыдущие страницы {PagerSize} шт")" @onclick="@(() => SetPagerSize( "back" ))">&laquo;</span></li>
+      <li class="page-item @PagePrevDisabledClass"><span class="page-link" title="Предыдущая страница" @onclick="@(() => NavigateToPage( "previous" ))">&lt;</span></li>
+      @for ( int i = PagerStartPage; i <= PagerEndPage; i++ )
+      {
+        var currentPage = i;
+        <li class="page-item @(currentPage == CurrentPage ? "active" : "")">
+          <span class="page-link" @onclick="@(() => UpdateList( currentPage ))">@currentPage</span>
+        </li>
+      }
+      <li class="page-item @PageNextDisabledClass"><span class="page-link" title="Следующая страница" @onclick="@(() => NavigateToPage( "next" ))">&gt;</span></li>
+      <li class="page-item @PagerNextDisabledClass"><span class="page-link" title="@($"Следующие страницы {PagerSize} шт")" @onclick="@(() => SetPagerSize( "forward" ))">&raquo;</span></li>
+      <li class="page-item" style="display:inline-flex">
+        <span class="page-link">
+          Страница
+        </span>
+        <span class="page-link" style="padding:0px; margin:0px">
+          <input type="text" class="form-control-sm" id="addressPort" @bind-value=@CurrentPageInternal style="width:3rem; padding:0px; margin:0px; line-height:unset; min-height:unset" />
+        </span>
+        <span class="page-link">
+          из @PagesCount
+        </span>
+      </li>
+    </ul>
+  }
+}

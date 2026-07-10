@@ -1,0 +1,84 @@
+﻿@using Toast.Server.Data
+@using Toast.Server.Data.Models
+@inject CommandService commandService;
+
+<button class="btn btn-outline-info btn-sm" @onclick="@RefreshClients" title="Обновить"><i class="bi bi-arrow-clockwise"></i></button>
+@if ( agentClients == null )
+{
+  <div>чтение клиентов ...</div>
+}
+else
+{
+  <Toast.Server.Components.Shared.MyTable.TableMy TItem="AgentClientUI" Compact Items="agentClients">
+    <TableHeader>
+      <th>Выбран</th>
+      <th>@nameof( AgentClient.ClientId )</th>
+    </TableHeader>
+    <TableRow>
+      @{
+        var selected = @context.Selected;
+      }
+      <td><input type="checkbox" class="form-check" checked="@selected" @onchange="@(async args => await OnSelectChanged( @context, args ))"></td>
+      <td>@context.Client.ClientId</td>
+    </TableRow>
+  </Toast.Server.Components.Shared.MyTable.TableMy>
+}
+
+@code {
+
+  [Parameter]
+  public List<string> SelectedClients { get; set; } = [];
+
+  // Шаблон имени строго: ИмяПараметра + Changed
+  [Parameter]
+  public EventCallback<List<string>> SelectedClientsChanged { get; set; }
+
+  string[] GetSelectedClientIds => agentClients?.Where( c => c.Selected ).Select( c => c.Client.ClientId ).ToArray() ?? [];
+
+  AgentClientUI[]? agentClients = null;
+  string? loadClientsError = null;
+
+  class AgentClientUI( AgentClient client )
+  {
+    public AgentClient Client => client;
+
+    public bool Selected { get; set; }
+  }
+
+  protected override async Task OnInitializedAsync()
+  {
+    await base.OnInitializedAsync();
+  }
+
+  protected override async Task OnParametersSetAsync()
+  {
+    await base.OnParametersSetAsync();
+
+    await RefreshClients();
+  }
+
+  async Task RefreshClients()
+  {
+    loadClientsError = null;
+    try
+    {
+      agentClients = ( await commandService.GetAllAgentClients() ).Select( c => new AgentClientUI( c ) { Selected = SelectedClients.Contains( c.ClientId ) } ).ToArray();
+    }
+    catch ( Exception ex )
+    {
+      loadClientsError = $"{ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}";
+
+      agentClients = null;
+    }
+  }
+
+  async Task OnSelectChanged( AgentClientUI clientUI, ChangeEventArgs args )
+  {
+    clientUI.Selected = args.Value is bool _bool ? _bool : !clientUI.Selected;
+
+    if ( clientUI.Selected )
+      await SelectedClientsChanged.InvokeAsync( SelectedClients.Union( [clientUI.Client.ClientId] ).ToList() );
+    else
+      await SelectedClientsChanged.InvokeAsync( SelectedClients.Except( [clientUI.Client.ClientId] ).ToList() );
+  }
+}

@@ -11,17 +11,18 @@
 
 <AuthorizeView>
 
-  <TabControl ActiveTabOnStart="@selectedComponent">
+  <TabControl ActiveTabOnStart="@selectedComponent" OnActiveTabChanged="@OnActiveTabChanged">
+    <Tab Name="@PageComponents.Test1" Title="DBTables">
+      <DBTables />
+    </Tab>
     <Tab Name="@PageComponents.SendCommands" Hint="Выполнение команд на клиентах">
       <SendCommands />
-    </Tab>
-    <Tab Name="@PageComponents.Test1">
-      Test 1
     </Tab>
     <Tab Name="@PageComponents.Test2">
       Test 2
     </Tab>
   </TabControl>
+
 </AuthorizeView>
 
 @code {
@@ -32,5 +33,12 @@
     Test2
   }
   PageComponents selectedComponent = PageComponents.SendCommands;
+
+  async Task OnActiveTabChanged(object name)
+  {
+    selectedComponent = ( PageComponents ) name;
+
+    await Task.CompletedTask;
+  }
 
 }
