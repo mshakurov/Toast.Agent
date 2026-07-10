@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Toast.Server.Data;
 
@@ -11,9 +12,11 @@ using Toast.Server.Data;
 namespace Toast.Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260710161018_UpdateAgentCmdForMakeFKToClient")]
+    partial class UpdateAgentCmdForMakeFKToClient
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -171,7 +174,7 @@ namespace Toast.Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AgentCommand", (string)null);
+                    b.ToTable("AgentCommand");
                 });
 
             modelBuilder.Entity("Toast.Server.Data.ApplicationUser", b =>
@@ -246,7 +249,7 @@ namespace Toast.Server.Migrations
 
                     b.HasKey("ClientId");
 
-                    b.ToTable("AgentClient", (string)null);
+                    b.ToTable("AgentClient");
                 });
 
             modelBuilder.Entity("Toast.Server.Data.Models.AgentCommandFor", b =>
@@ -270,7 +273,7 @@ namespace Toast.Server.Migrations
 
                     b.HasIndex("CommandId");
 
-                    b.ToTable("AgentCommandFor", (string)null);
+                    b.ToTable("AgentCommandFor");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

@@ -5,7 +5,13 @@ namespace Toast.Server.Data.Models
   public class AgentCommandFor
   {
     public long Id { get; set; }
-    public AgentClient? Client { get; set; }
+    public string ClientId { get; set; } = null!;
+    public AgentClient Client { get; set; } = null!;
     public AgentCommand Command { get; set; } = AgentCommand.Empty;
+
+    public override string ToString()
+    {
+      return $"{Id}, ClientId: {ClientId}: '{Command}'";
+    }
   }
 }

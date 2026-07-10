@@ -20,49 +20,20 @@ namespace Toast.Server.Api.Controllers
   public class DataController : ControllerBase
   {
     private readonly ApplicationDbContext context;
+    private readonly CommandService commandService;
 
-    public DataController( ApplicationDbContext context )
+    public DataController( ApplicationDbContext context, CommandService commandService )
     {
       this.context = context;
+      this.commandService = commandService;
     }
 
     [HttpGet( "items" )]
-    public IActionResult GetProtectedData()
-    {
-      var secureData = new List<TestDataItem>
-        {
-            new(1, "Товар 1", "Секретное значение А"),
-            new(2, "Товар 2", "Секретное значение Б"),
-            new(3, "Пользователь", User.FindFirstValue(ClaimTypes.NameIdentifier)?.ToString() ?? string.Empty),
-        };
-      return Ok( secureData );
-    }
+    public IActionResult GetProtectedData() 
+      => Ok( commandService.GetProtectedData( new TestDataItem( 3, "Пользователь", User.FindFirstValue( ClaimTypes.NameIdentifier )?.ToString() ?? string.Empty ) ) );
 
     [HttpPost( "commands" )]
     public async Task<IActionResult> GetCommands( [FromBody] AgentRequest request )
-    {
-      //List<AgentCommand> commands =
-      //  [
-      //    new () { Id = Guid.NewGuid(), Type = CommandTypes.ShowMessage,  JsonParameters = JsonSerializer.Serialize( new ShowMessageData { Title = "Hallow device!", Message  = $"From server! You are: {request.AgentId}", Duration = 11, WaitIfShow = false  } ) }
-      //  ];
-
-      var agentClient = await context.AgentClient.FindAsync( request.AgentId );
-      if ( agentClient == null )
-      {
-        agentClient = context.AgentClient.Add( new Data.Models.AgentClient() { ClientId = request.AgentId } ).Entity;
-
-        // 2. ОТПРАВЛЯЕМ ИЗМЕНЕНИЯ В БАЗУ ДАННЫХ
-        // Только в этот момент EF Core сгенерирует SQL-команду INSERT и выполнит её в SQL Server
-        await context.SaveChangesAsync();
-
-        return Ok( new AgentResponse() );
-      }
-      else
-      {
-        var commandsFor = await context.AgentCommandFor.Where( ac => ac.Client != null && ac.Client.ClientId == request.AgentId ).ToListAsync();
-
-        return Ok( new AgentResponse { Commands = commandsFor.Select( cf => cf.Command ).ToList() } );
-      }
-    }
+      => Ok( await commandService.GetCommands( request ) );
   }
 }

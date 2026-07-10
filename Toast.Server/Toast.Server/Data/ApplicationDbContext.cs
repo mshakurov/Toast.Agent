@@ -15,9 +15,22 @@ namespace Toast.Server.Data
     {
       base.OnModelCreating( builder );
 
-      builder.Entity<AgentCommandFor>().HasKey( nameof( Models.AgentCommandFor.Id ) );
+      builder.Entity<AgentCommandFor>().HasKey( c => c.Id );
 
-      builder.Entity<AgentClient>().HasKey( nameof( Models.AgentClient.ClientId ) );
+      // 2. ГАРАНТИРУЕМ АВТОИНКРЕМЕНТ (IDENTITY) ДЛЯ SQL SERVER
+      builder.Entity<AgentCommandFor>()
+          .Property( c => c.Id )
+          .UseIdentityColumn(); // Создаст в базе IDENTITY(1,1)
+
+      builder.Entity<AgentClient>().HasKey( c => c.ClientId );
+
+      // ---- НАСТРОЙКА СВЯЗИ ----
+      builder.Entity<AgentCommandFor>()
+          .HasOne( c => c.Client )                  // У команды есть один клиент
+          .WithMany()                             // У клиента может быть много команд (коллекцию в AgentClient мы не создавали)
+          .HasForeignKey( c => c.ClientId )    // Внешний ключ в таблице команд
+          .IsRequired( true )                      // Делает связь необязательной (так как тип string? допускает null)
+          .OnDelete( DeleteBehavior.ClientNoAction );      // Что делать при удалении клиента (Cascade - удалит и его команды)
     }
   }
 }
