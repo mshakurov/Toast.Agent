@@ -36,6 +36,7 @@ namespace Toast.Server.Api.Controllers
     public async Task<IActionResult> GetCommands( [FromBody] AgentRequest request )
       => Ok( await commandService.GetCommands( request ) );
 
+    [HttpPost( "results" )]
     public async Task<IActionResult> SetResults( [FromBody] AgentResult agentResult )
     {
       await commandService.SetResults( agentResult );

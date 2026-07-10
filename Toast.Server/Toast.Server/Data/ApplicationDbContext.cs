@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
+using Toast.Core.Commands;
 using Toast.Server.Data.Models;
 
 namespace Toast.Server.Data
@@ -10,6 +11,8 @@ namespace Toast.Server.Data
     public DbSet<AgentCommandFor> AgentCommandFor { get; set; }
 
     public DbSet<AgentClient> AgentClient { get; set; }
+
+    public DbSet<AgentResultDB> AgentResultDB { get; set; }
 
     protected override void OnModelCreating( ModelBuilder builder )
     {
@@ -35,6 +38,11 @@ namespace Toast.Server.Data
       // Говорим EF Core, что AgentCommand — это неотъемлемая часть AgentCommandFor
       builder.Entity<AgentCommandFor>()
              .OwnsOne( c => c.Command );
+
+      builder.Entity<AgentResultDB>().HasKey( c => c.Id );
+
+      builder.Entity<CommandResult>()
+        .HasKey( c => c.CommandId );
     }
   }
 }

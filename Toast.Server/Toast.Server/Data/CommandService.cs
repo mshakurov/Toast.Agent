@@ -13,6 +13,8 @@ namespace Toast.Server.Data
     public readonly State Current = new State();
     private readonly IDbContextFactory<ApplicationDbContext> dbFactory;
 
+    public event EventHandler<string>? ClientAddedEvent;
+
     public CommandService( IDbContextFactory<ApplicationDbContext> dbFactory )
     {
       this.dbFactory = dbFactory;
@@ -50,6 +52,7 @@ namespace Toast.Server.Data
       {
         agentClient = dbContext.AgentClient.Add( new Models.AgentClient() { ClientId = request.AgentId } ).Entity;
         await dbContext.SaveChangesAsync( token );
+        ClientAddedEvent?.Invoke( this, request.AgentId );
         return new AgentResponse();
       }
       else
@@ -104,9 +107,19 @@ namespace Toast.Server.Data
       return added;
     }
 
-    internal async Task SetResults( AgentResult agentResult )
+    internal async Task SetResults( AgentResult agentResult, CancellationToken token = default )
     {
-      throw new NotImplementedException();
+      using var dbContext = await dbFactory.CreateDbContextAsync();
+
+      var agentClient = await dbContext.AgentClient.FindAsync( [agentResult.AgentId], token );
+      if ( agentClient == null )
+      {
+        agentClient = dbContext.AgentClient.Add( new Models.AgentClient() { ClientId = agentResult.AgentId } ).Entity;
+        await dbContext.SaveChangesAsync( token );
+        ClientAddedEvent?.Invoke( this, agentResult.AgentId );
+      }
+
+      await dbContext.AgentResultDB.AddAsync( AgentResultDB.From( agentResult ) );
     }
 
     public class State

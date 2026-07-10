@@ -49,6 +49,8 @@ else
   protected override async Task OnInitializedAsync()
   {
     await base.OnInitializedAsync();
+
+    commandService.ClientAddedEvent += OnClientAdded;
   }
 
   protected override async Task OnParametersSetAsync()
@@ -81,5 +83,10 @@ else
       await SelectedClientsChanged.InvokeAsync( SelectedClients.Union( [clientUI.Client.ClientId] ).ToList() );
     else
       await SelectedClientsChanged.InvokeAsync( SelectedClients.Except( [clientUI.Client.ClientId] ).ToList() );
+  }
+
+  void OnClientAdded( object? sender, string clientId )
+  {
+    _ = Task.Run( () => RefreshClients().ContinueWith( _ => InvokeAsync( StateHasChanged ) ).Wait() );
   }
 }
