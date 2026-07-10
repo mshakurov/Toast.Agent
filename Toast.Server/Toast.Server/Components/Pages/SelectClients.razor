@@ -9,17 +9,18 @@
 }
 else
 {
-  <Toast.Server.Components.Shared.MyTable.TableMy TItem="AgentClientUI" Compact Items="agentClients">
+  <Toast.Server.Components.Shared.MyTable.TableMy TItem="AgentClientUI" Compact Items="agentClients" Border>
     <TableHeader>
       <th>Выбран</th>
       <th>@nameof( AgentClient.ClientId )</th>
     </TableHeader>
     <TableRow>
       @{
-        var selected = @context.Selected;
+        var agentUI = context;
+        var selected = agentUI.Selected;
       }
-      <td><input type="checkbox" class="form-check" checked="@selected" @onchange="@(async args => await OnSelectChanged( @context, args ))"></td>
-      <td>@context.Client.ClientId</td>
+      <td><input type="checkbox" class="form-check" checked="@selected" @onchange="@(async args => await OnSelectChanged( @agentUI, args ))"></td>
+      <td @onclick="@(async args => await OnSelectChanged( @agentUI, null ))">@agentUI.Client.ClientId</td>
     </TableRow>
   </Toast.Server.Components.Shared.MyTable.TableMy>
 }
@@ -72,9 +73,9 @@ else
     }
   }
 
-  async Task OnSelectChanged( AgentClientUI clientUI, ChangeEventArgs args )
+  async Task OnSelectChanged( AgentClientUI clientUI, ChangeEventArgs? args )
   {
-    clientUI.Selected = args.Value is bool _bool ? _bool : !clientUI.Selected;
+    clientUI.Selected = args != null && args.Value is bool _bool ? _bool : !clientUI.Selected;
 
     if ( clientUI.Selected )
       await SelectedClientsChanged.InvokeAsync( SelectedClients.Union( [clientUI.Client.ClientId] ).ToList() );
