@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Toast.Server.Data;
 
@@ -11,9 +12,11 @@ using Toast.Server.Data;
 namespace Toast.Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260710094010_UpdatAgentCommandForFieldId")]
+    partial class UpdatAgentCommandForFieldId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -239,16 +242,6 @@ namespace Toast.Server.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("Toast.Server.Data.Models.AgentClient", b =>
-                {
-                    b.Property<string>("ClientId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("ClientId");
-
-                    b.ToTable("AgentClient");
-                });
-
             modelBuilder.Entity("Toast.Server.Data.Models.AgentCommandFor", b =>
                 {
                     b.Property<long>("Id")
@@ -258,14 +251,13 @@ namespace Toast.Server.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<string>("ClientId")
-                        .HasColumnType("nvarchar(450)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("CommandId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ClientId");
 
                     b.HasIndex("CommandId");
 
@@ -325,17 +317,11 @@ namespace Toast.Server.Migrations
 
             modelBuilder.Entity("Toast.Server.Data.Models.AgentCommandFor", b =>
                 {
-                    b.HasOne("Toast.Server.Data.Models.AgentClient", "Client")
-                        .WithMany()
-                        .HasForeignKey("ClientId");
-
                     b.HasOne("Toast.Core.Commands.AgentCommand", "Command")
                         .WithMany()
                         .HasForeignKey("CommandId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Client");
 
                     b.Navigation("Command");
                 });

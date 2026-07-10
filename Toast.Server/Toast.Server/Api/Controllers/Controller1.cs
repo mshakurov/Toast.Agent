@@ -46,9 +46,23 @@ namespace Toast.Server.Api.Controllers
       //    new () { Id = Guid.NewGuid(), Type = CommandTypes.ShowMessage,  JsonParameters = JsonSerializer.Serialize( new ShowMessageData { Title = "Hallow device!", Message  = $"From server! You are: {request.AgentId}", Duration = 11, WaitIfShow = false  } ) }
       //  ];
 
-      var commandsFor = await context.AgentCommandFor.Where( ac => ac.ClientId.ToString() == request.AgentId ).ToListAsync();
+      var agentClient = await context.AgentClient.FindAsync( request.AgentId );
+      if ( agentClient == null )
+      {
+        agentClient = context.AgentClient.Add( new Data.Models.AgentClient() { ClientId = request.AgentId } ).Entity;
 
-      return Ok( new AgentResponse { Commands = commandsFor.Select( cf => cf.Command ).ToList() } );
+        // 2. ОТПРАВЛЯЕМ ИЗМЕНЕНИЯ В БАЗУ ДАННЫХ
+        // Только в этот момент EF Core сгенерирует SQL-команду INSERT и выполнит её в SQL Server
+        await context.SaveChangesAsync();
+
+        return Ok( new AgentResponse() );
+      }
+      else
+      {
+        var commandsFor = await context.AgentCommandFor.Where( ac => ac.Client != null && ac.Client.ClientId == request.AgentId ).ToListAsync();
+
+        return Ok( new AgentResponse { Commands = commandsFor.Select( cf => cf.Command ).ToList() } );
+      }
     }
   }
 }

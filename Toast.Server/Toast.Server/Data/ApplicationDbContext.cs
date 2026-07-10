@@ -9,11 +9,15 @@ namespace Toast.Server.Data
   {
     public DbSet<AgentCommandFor> AgentCommandFor { get; set; }
 
+    public DbSet<AgentClient> AgentClient { get; set; }
+
     protected override void OnModelCreating( ModelBuilder builder )
     {
       base.OnModelCreating( builder );
 
-      builder.Entity<AgentCommandFor>().HasKey( "Id" );
+      builder.Entity<AgentCommandFor>().HasKey( nameof( Models.AgentCommandFor.Id ) );
+
+      builder.Entity<AgentClient>().HasKey( nameof( Models.AgentClient.ClientId ) );
     }
   }
 }
