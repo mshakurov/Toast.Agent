@@ -48,16 +48,28 @@ namespace Toast.Server.Components.Pages
 
       try
       {
+        using var dbContext = await dbFactory.CreateDbContextAsync();
+
         types = dbContext.Model.GetEntityTypes().ToArray();
 
         if ( types.Length > 0 )
+        {
           if ( selectedType == null )
-            selectedType = new SelectedInfo( types[0] );
+          {
+            if ( commandService.Current.SelectedDBTablesTypeFullName == null )
+              selectedType = new SelectedInfo( types[0] );
+            else
+              selectedType = new SelectedInfo( types.FirstOrDefault( t => t.ClrType.FullName == commandService.Current.SelectedDBTablesTypeFullName ) ?? types[0] );
+          }
           else
-              if ( !types.Contains( selectedType.Type ) )
-            selectedType = null;
-          else
-            selectedType = null;
+          {
+            selectedType = new SelectedInfo( types.FirstOrDefault( t => t.ClrType.FullName == selectedType.Type.ClrType.FullName ) ?? types[0] );
+          }
+          commandService.Current.SelectedDBTablesTypeFullName = selectedType.Type.ClrType.FullName;
+        }
+        else
+          selectedType = null;
+
         alert = null;
       }
       catch ( Exception ex )
@@ -79,6 +91,8 @@ namespace Toast.Server.Components.Pages
       if ( sel != null )
       {
         selectedType = new SelectedInfo( sel );
+        commandService.Current.SelectedDBTablesTypeFullName = selectedType.Type.ClrType.FullName;
+
         StateHasChanged();
         await LoadData();
       }
@@ -93,15 +107,12 @@ namespace Toast.Server.Components.Pages
       selectedType.Rows = ( await GetAllEntitiesAsync( selectedType.Type ) ).ToArray();
     }
 
-    private async Task LoadDataFromUI()
-    {
-      await LoadData();
-    }
-
     async Task<List<object>> GetAllEntitiesAsync( Microsoft.EntityFrameworkCore.Metadata.IEntityType entityType )
     {
       // 1. Извлекаем реальный System.Type из метаданных EF Core
       Type clrType = entityType.ClrType;
+
+      using var dbContext = await dbFactory.CreateDbContextAsync();
 
       //var setMethod = dbContext.GetType().GetMethods().FirstOrDefault( m => m.Name == "Set" && m.GetParameters().Length > 0 );
       var setMethod = dbContext.GetType().GetMethod( "Set", [typeof( string )] );
@@ -135,11 +146,28 @@ namespace Toast.Server.Components.Pages
       selectedType.Deleting = true;
       try
       {
+        using var dbContext = await dbFactory.CreateDbContextAsync();
+
+        var key = selectedType.Type.FindPrimaryKey();
+
+        if ( key != null )
+        {
+          var keys = key.Properties.Select( p => p.PropertyInfo?.GetValue( context ) ).ToArray();
+          if ( keys.Length > 0 )
+          {
+            var obj = dbContext.Find( selectedType.Type.ClrType, keys );
+            if ( obj != null )
+              context = obj;
+          }
+        }
+
         dbContext.Remove( context );
+
+        var props = dbContext.GetType().GetProperties().Where( p => p.PropertyType.IsGenericType && p.PropertyType.GetGenericTypeDefinition() == typeof( Microsoft.EntityFrameworkCore.DbSet<> ) /*&& p.PropertyType.GenericTypeArguments[0] == selectedType.Type.ClrType*/ ).ToArray();
 
         await dbContext.SaveChangesAsync();
       }
-      catch(Exception ex)
+      catch ( Exception ex )
       {
         alert = $"Ошибка удаления '{context}': {ex}";
       }

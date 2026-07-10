@@ -38,6 +38,7 @@
       return;
     }
 
+    alert = null;
     sending = true;
     StateHasChanged();
 
@@ -46,7 +47,6 @@
       {
         try
         {
-          await Task.Delay( 10000 );
           await commandService.SendAsync( @commandService.Current.SelectedCommandClients, showMessageData.CloneEx() );
         }
         catch ( Exception ex )
@@ -57,7 +57,7 @@
         finally
         {
           sending = false;
-          StateHasChanged();
+          await InvokeAsync( StateHasChanged );
         }
       } );
   }

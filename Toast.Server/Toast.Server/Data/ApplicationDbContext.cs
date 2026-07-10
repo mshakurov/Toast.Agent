@@ -31,6 +31,10 @@ namespace Toast.Server.Data
           .HasForeignKey( c => c.ClientId )    // Внешний ключ в таблице команд
           .IsRequired( true )                      // Делает связь необязательной (так как тип string? допускает null)
           .OnDelete( DeleteBehavior.ClientNoAction );      // Что делать при удалении клиента (Cascade - удалит и его команды)
+
+      // Говорим EF Core, что AgentCommand — это неотъемлемая часть AgentCommandFor
+      builder.Entity<AgentCommandFor>()
+             .OwnsOne( c => c.Command );
     }
   }
 }

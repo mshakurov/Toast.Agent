@@ -101,7 +101,7 @@ namespace Toast.Core.Services
         service._context.Logger.Info( this, "Settings changed locally." );
       }
 
-      // добавление результата выполнения команды в очередь на отправку на сервер для длительно выполнящихся команд. 
+      // добавление результата выполнения команды в очередь на отправку на сервер для длительно выполняющихся команд. 
       public void AddCommandResult( CommandResult result )
       {
         service._postponedResults.Enqueue( result );

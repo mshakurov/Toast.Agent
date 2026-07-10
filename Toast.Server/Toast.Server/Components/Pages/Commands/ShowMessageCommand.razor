@@ -14,11 +14,17 @@
       </div>
       <div class="mb-3">
         <label for="message" class="form-label">@nameof( ShowMessageData.Message )</label>
-        <textarea class="form-control" id="message" rows="3" @bind="@_data.Message" @bind:event="oninput" @onchange="NotifyParent" @bind:after="NotifyParent"></textarea>
+        <textarea class="form-control" id="message" rows="3" aria-describedby="messageHelp" @bind="@_data.Message" @bind:event="oninput" @onchange="NotifyParent" @bind:after="NotifyParent"></textarea>
+        <div id="messageHelp" class="form-text">Текст сообщения на клиенте</div>
+      </div>
+      <div class="mb-3">
+        <label for="duration" class="form-label">@nameof( ShowMessageData.Duration ) (in seconds)</label>
+        <input type="number" class="form-control" id="duration" aria-describedby="durationHelp" @bind-value=@_data.Duration @bind-value:event="oninput" @onchange="NotifyParent" @bind-value:after="NotifyParent">
+        <div id="durationHelp" class="form-text">Время в секундах отображения на клиенте</div>
       </div>
       <div class="mb-3 form-check">
         <input type="checkbox" class="form-check-input" id="waitIfShow" @bind="@_data.WaitIfShow" @bind:event="oninput" @onchange="NotifyParent" @bind:after="NotifyParent">
-        <label class="form-check-label" for="waitIfShow">@nameof( ShowMessageData.WaitIfShow )</label>
+        <label class="form-check-label" for="waitIfShow" @onclick=@(async () => { @_data.WaitIfShow = !@_data.WaitIfShow; await NotifyParent(); })>@nameof( ShowMessageData.WaitIfShow )</label>
       </div>
       @if (ChildContent != null)
       {
