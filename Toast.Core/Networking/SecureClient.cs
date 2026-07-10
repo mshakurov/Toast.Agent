@@ -10,9 +10,19 @@ using Toast.Core.Services;
 
 namespace Toast.Core.Networking
 {
-  internal class SecureClient
+  internal class SecureClient : IDisposable
   {
-    public HttpClient SecureDataClient;
+    HttpClient baseClient;
+    HttpClient _secureDataClient;
+    public HttpClient SecureDataClient
+    {
+      get => _secureDataClient;
+      set
+      {
+        try { _secureDataClient?.Dispose(); } catch { }
+        _secureDataClient = value;
+      }
+    }
     private readonly ILogger logger;
     private readonly AuthService authService;
 
@@ -28,7 +38,7 @@ namespace Toast.Core.Networking
       httpClientHandler.ServerCertificateCustomValidationCallback += ( _1, _2, _3, _4 ) => true;
 
       // 1. Клиент чисто для аутентификации (ему не нужны заголовки)
-      var baseClient = new HttpClient( httpClientHandler ) { BaseAddress = new Uri( baseServerUrl ) };
+      baseClient = new HttpClient( httpClientHandler ) { BaseAddress = new Uri( baseServerUrl ) };
       authService = new AuthService( credentials, lastAuthToken, baseClient );
 
       // 2. Собираем защищенный клиент, передавая ему наш кастомный Handler
@@ -38,10 +48,16 @@ namespace Toast.Core.Networking
       };
 
       // ЭТИМ клиентом мы пользуемся во всем Android-приложении для работы с данными
-      SecureDataClient = new HttpClient( jwtHandler )
+      _secureDataClient = new HttpClient( jwtHandler )
       {
         BaseAddress = new Uri( baseServerUrl )
       };
+    }
+
+    public void Dispose()
+    {
+      baseClient.Dispose();
+      _secureDataClient.Dispose();
     }
   }
 }
