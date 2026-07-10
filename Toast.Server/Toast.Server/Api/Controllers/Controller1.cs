@@ -1,12 +1,15 @@
 ﻿using System.Security.Claims;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 using Toast.Core.Commands;
 using Toast.Core.Commands.CommandData;
+using Toast.Server.Data;
 
 namespace Toast.Server.Api.Controllers
 {
@@ -16,6 +19,13 @@ namespace Toast.Server.Api.Controllers
   [Authorize( AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme )]
   public class DataController : ControllerBase
   {
+    private readonly ApplicationDbContext context;
+
+    public DataController( ApplicationDbContext context )
+    {
+      this.context = context;
+    }
+
     [HttpGet( "items" )]
     public IActionResult GetProtectedData()
     {
@@ -29,14 +39,16 @@ namespace Toast.Server.Api.Controllers
     }
 
     [HttpPost( "commands" )]
-    public IActionResult GetCommands( [FromBody] AgentRequest request )
+    public async Task<IActionResult> GetCommands( [FromBody] AgentRequest request )
     {
-      List<AgentCommand> commands =
-        [
-          new () { Id = Guid.NewGuid(), Type = CommandTypes.ShowMessage,  JsonParameters = JsonSerializer.Serialize( new ShowMessageData { Title = "Hallow device!", Message  = $"From server! You are: {request.AgentId}", Duration = 11, WaitIfShow = false  } ) }
-        ];
+      //List<AgentCommand> commands =
+      //  [
+      //    new () { Id = Guid.NewGuid(), Type = CommandTypes.ShowMessage,  JsonParameters = JsonSerializer.Serialize( new ShowMessageData { Title = "Hallow device!", Message  = $"From server! You are: {request.AgentId}", Duration = 11, WaitIfShow = false  } ) }
+      //  ];
 
-      return Ok( new AgentResponse { Commands = commands } );
+      var commandsFor = await context.AgentCommandFor.Where( ac => ac.ClientId.ToString() == request.AgentId ).ToListAsync();
+
+      return Ok( new AgentResponse { Commands = commandsFor.Select( cf => cf.Command ).ToList() } );
     }
   }
 }
