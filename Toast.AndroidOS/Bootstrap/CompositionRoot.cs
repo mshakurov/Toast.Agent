@@ -15,7 +15,7 @@ internal static class CompositionRoot
 
   public static string PackageName => Application.Context.PackageName ?? "com.maratsh.Toast.AndroidOS";
 
-  public static IAgentService CreateAgent( IHostStatusListener agentStatusListener ) => CoreFactory.CreateAgentService( GetSingletonLogger(), GetSingletonSettingsService().LoadSettings(), agentStatusListener, new ShowMessageService() );
+  public static IAgentService CreateAgent( IHostStatusListener agentStatusListener ) => CoreFactory.CreateAgentService( GetSingletonLogger(), GetSingletonSettingsService().LoadSettings(), agentStatusListener, new ShowMessageService( GetSingletonLogger() ) );
 
   public static string GetSystemTag() => nameof( Toast.AndroidOS ).Split( '.' ).Last();
 

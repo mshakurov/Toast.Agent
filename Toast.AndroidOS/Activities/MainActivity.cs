@@ -97,7 +97,7 @@ namespace Toast.AndroidOS.Activities
         {
           _logger.Info( this, $"btnTestShowMessageService, Creating Intent" );
 
-          new ShowMessageService().StartShowMessage( "Тестовое сообщение\nс переносом строки", "♥♥♥", 10, exception =>
+          new ShowMessageService(_logger).StartShowMessage( "Тестовое сообщение\nс переносом строки", "♥♥♥", 10, exception =>
           {
             _logger.Info( this, $"btnTestShowMessageService: onResult('{exception}')" );
           } );

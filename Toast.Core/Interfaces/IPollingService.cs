@@ -9,7 +9,7 @@ namespace Toast.Core.Interfaces
         CancellationToken token );
 
     Task ReportAsync(
-        IReadOnlyList<CommandResult> results,
+        List<CommandResult> results,
         CancellationToken token );
   }
 }

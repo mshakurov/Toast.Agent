@@ -46,44 +46,65 @@ namespace Toast.Core.Services
         _context.Logger.Info( this, $"Polling server {server.s.GetKey()}..." );
         _context.AgentStatusListener.ReportStatus( AgentState.Polling );
 
-        var secureClient = new SecureClient( server.s.BaseUrl, server.s.LoginModel!, server.s.LastAuthToken, _context.Logger );
+        //var secureClient = new SecureClient( server.s.BaseUrl, server.s.LoginModel!, server.s.LastAuthToken, _context.Logger );
 
         var setsChanged = false;
 
-        List<Exception> exceptions = new();
+        //List<Exception> exceptions = new();
 
-        AgentResponse? agentResponse = null;
-        try
+        //AgentResponse? agentResponse = null;
+        //try
+        //{
+        //  agentResponse = await GetAgentResponse( secureClient.SecureDataClient, request, token );
+        //}
+        //catch ( Exception ex )
+        //{
+        //  setsChanged = server.s.LastAuthToken != null;
+        //  setsChanged = true;
+        //  exceptions.Add( ex );
+
+        //  if ( ex is UnauthorizedException exUnA )
+        //  {
+        //    secureClient = new SecureClient( server.s.BaseUrl, server.s.LoginModel!, null, _context.Logger );
+        //    try
+        //    {
+        //      agentResponse = await GetAgentResponse( secureClient.SecureDataClient, request, token );
+        //    }
+        //    catch ( Exception ex2 )
+        //    {
+        //      exceptions.Add( ex2 );
+        //    }
+        //  }
+        //}
+
+        //if ( server.s.LastAuthToken != secureClient.LastAuthToken )
+        //{
+        //  server.s.LastAuthToken = secureClient.LastAuthToken;
+        //  setsChanged = true;
+        //}
+
+        //if ( agentResponse != null )
+        //  if ( _context.Settings.LastSuccessfulServerIndex != server.i )
+        //  {
+        //    _context.Settings.LastSuccessfulServerIndex = server.i;
+        //    setsChanged = true;
+        //  }
+
+        //if ( setsChanged )
+        //  _ = _context.Settings.Update();
+
+        //if ( agentResponse != null )
+        //  return agentResponse;
+
+        var result = await TryProcess( server.s, ( client, token ) => GetAgentResponse( client, request, token ), token );
+
+        if ( server.s.LastAuthToken != result.LastAuthToken )
         {
-          agentResponse = await GetAgentResponse( secureClient.SecureDataClient, request, token );
-        }
-        catch ( Exception ex )
-        {
-          setsChanged = server.s.LastAuthToken != null;
+          server.s.LastAuthToken = result.LastAuthToken;
           setsChanged = true;
-          exceptions.Add( ex );
-
-          if ( ex is UnauthorizedException exUnA )
-          {
-            secureClient = new SecureClient( server.s.BaseUrl, server.s.LoginModel!, null, _context.Logger );
-            try
-            {
-              agentResponse = await GetAgentResponse( secureClient.SecureDataClient, request, token );
-            }
-            catch ( Exception ex2 )
-            {
-              exceptions.Add( ex2 );
-            }
-          }
         }
 
-        if ( server.s.LastAuthToken != secureClient.LastAuthToken )
-        {
-          server.s.LastAuthToken = secureClient.LastAuthToken;
-          setsChanged = true;
-        }
-
-        if ( agentResponse != null )
+        if ( result.result != null )
           if ( _context.Settings.LastSuccessfulServerIndex != server.i )
           {
             _context.Settings.LastSuccessfulServerIndex = server.i;
@@ -93,10 +114,10 @@ namespace Toast.Core.Services
         if ( setsChanged )
           _ = _context.Settings.Update();
 
-        if ( agentResponse != null )
-          return agentResponse;
+        if ( result.result != null )
+          return result.result;
 
-        _context.Logger.Error( this, $"Ошибка запроса с сервера '{server.s.GetKey()}': {string.Join( ", ", exceptions.Select( ex => $"# {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}" ) )}" );
+        _context.Logger.Error( this, $"Ошибка запроса с сервера '{server.s.GetKey()}': {string.Join( ", ", result.exceptions.Select( ex => $"# {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}" ) )}" );
       }
 
       return new AgentResponse();
@@ -129,10 +150,64 @@ namespace Toast.Core.Services
       }
     }
 
-    public async Task ReportAsync( IReadOnlyList<CommandResult> results, CancellationToken token )
+    delegate Task<TResult> Getter<TResult>( HttpClient client, CancellationToken token );
+
+    async Task<(TResult? result, AuthResponse? LastAuthToken, List<Exception> exceptions)> TryProcess<TResult>(RemoteServer remoteServer, Getter<TResult> getter, CancellationToken token)
+    {
+      var secureClient = new SecureClient( remoteServer.BaseUrl, remoteServer.LoginModel!, remoteServer.LastAuthToken, _context.Logger );
+
+      try
+      {
+        List<Exception> exceptions = new();
+
+        TResult? result = default;
+        try
+        {
+          result = await getter( secureClient.SecureDataClient, token );
+        }
+        catch ( Exception ex )
+        {
+          exceptions.Add( ex );
+
+          if ( ex is UnauthorizedException exUnA )
+          {
+            secureClient.Dispose();
+            secureClient = new SecureClient( remoteServer.BaseUrl, remoteServer.LoginModel!, null, _context.Logger );
+            try
+            {
+              result = await getter( secureClient.SecureDataClient, token );
+            }
+            catch ( Exception ex2 )
+            {
+              exceptions.Add( ex2 );
+            }
+          }
+        }
+
+        return (result, secureClient.LastAuthToken, exceptions);
+      }
+      finally
+      {
+        secureClient.Dispose();
+      }
+    }
+
+    public async Task ReportAsync( List<CommandResult> results, CancellationToken token )
     {
       _context.Logger.Info( this, $"Sending {results.Count}  answers ..." );
       _context.AgentStatusListener.ReportStatus( AgentState.Answering );
+
+      //foreach ( var result in results )
+      //{
+      //  try
+      //  {
+      //    HttpResponseMessage response = await client.PostAsJsonAsync( "api/data/commands", request, token );
+
+      //  }
+      //  catch ( Exception ex )
+      //  {
+      //  }
+      //}
 
       await Task.CompletedTask;
     }

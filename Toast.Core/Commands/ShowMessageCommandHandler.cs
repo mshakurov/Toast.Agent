@@ -58,6 +58,8 @@ namespace Toast.Core.Commands
 
     private void OnShowResult( Guid commandId, string? exception )
     {
+      context.Logger.Debug(this, $"OnShowResult: {commandId}, '{exception}'" );
+
       serviceContext.AddCommandResult( new CommandResult()
       {
         CommandId = commandId,

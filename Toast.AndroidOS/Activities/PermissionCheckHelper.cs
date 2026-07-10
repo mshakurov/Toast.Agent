@@ -19,6 +19,7 @@ namespace Toast.AndroidOS.Activities
 
     private int requestPermissionPostNotifyCount = 0;
     private int requestPermissionCheckNetworkCount = 0;
+    private int requestPermissionUseFullScreenIntent = 0;
 
     public bool CheckPermissions() => CheckPermissionsInternal( true );
 
@@ -93,6 +94,41 @@ namespace Toast.AndroidOS.Activities
         if ( askUser )
           granted = _owner.CheckSelfPermission( Android.Manifest.Permission.AccessNetworkState );
         log.Add( $"'ACCESS_NETWORK_STATE' - {granted}" );
+
+        access &= granted == Android.Content.PM.Permission.Granted;
+      }
+
+      // проверка USE_FULL_SCREEN_INTENT
+      if ( OperatingSystem.IsAndroidVersionAtLeast( 29 ) )
+      {
+        var granted = _owner.CheckSelfPermission( Android.Manifest.Permission.UseFullScreenIntent );
+
+        _logger?.Info( _owner, $"USE_FULL_SCREEN_INTENT = {granted}" );
+
+        if ( askUser && granted != Android.Content.PM.Permission.Granted )
+        {
+          if ( ++requestPermissionUseFullScreenIntent <= 2 )
+          {
+            _owner.RequestPermissions(
+                new[]
+                {
+                  Android.Manifest.Permission.UseFullScreenIntent
+                },
+                100 );
+          }
+          else
+          {
+            Android.Widget.Toast.MakeText( _owner, Resource.String.setUseFullScreenIntentPermissionsEn, ToastLength.Long )?.Show();
+
+            var intent = new Intent( Android.Provider.Settings.ActionApplicationDetailsSettings );
+            intent.SetData( Android.Net.Uri.Parse( $"package:{CompositionRoot.PackageName}" ) );
+            _owner.StartActivity( intent );
+          }
+        }
+
+        if ( askUser )
+          granted = _owner.CheckSelfPermission( Android.Manifest.Permission.UseFullScreenIntent );
+        log.Add( $"'USE_FULL_SCREEN_INTENT' - {granted}" );
 
         access &= granted == Android.Content.PM.Permission.Granted;
       }

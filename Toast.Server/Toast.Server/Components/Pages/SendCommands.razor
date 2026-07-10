@@ -14,12 +14,13 @@
 
 @if ( alert != null )
 {
-  <textarea class="form-control text-bg-warning" rows="5" @bind="@alert"></textarea>
+  <textarea class="form-control text-bg-warning" rows="@alertRows" @bind="@alert"></textarea>
 }
 
 @code {
 
   string? alert = null;
+  int alertRows = 3;
   bool sending = false;
 
   protected override async Task OnInitializedAsync()
@@ -34,7 +35,7 @@
 
     if ( @commandService.Current.SelectedCommandClients.Count == 0 )
     {
-      ShowAlert( "Не выбраны клиенты!" );
+      ShowAlert( "Не выбраны клиенты!", 5, 1 );
       return;
     }
 
@@ -48,10 +49,13 @@
         try
         {
           await commandService.SendAsync( @commandService.Current.SelectedCommandClients, showMessageData.CloneEx() );
+
+          ShowAlert( "Команда успешно поставлена в очередь", 5, 1 );
         }
         catch ( Exception ex )
         {
           alert = $"Ошибка отправки команд: {ex}";
+          alertRows = 5;
           StateHasChanged();
         }
         finally
@@ -62,15 +66,19 @@
       } );
   }
 
-  void ShowAlert( string msg, int seconds = 5 )
+  void ShowAlert( string msg, int seconds = 5, int rows = 3 )
   {
-    alert = msg;
-    StateHasChanged();
-
-    Task.Delay( TimeSpan.FromSeconds( seconds ) ).ContinueWith( _ =>
+    InvokeAsync( () =>
     {
-      alert = null;
-      _ = InvokeAsync( StateHasChanged );
+      alert = msg;
+      alertRows = rows;
+      StateHasChanged();
+
+      Task.Delay( TimeSpan.FromSeconds( seconds ) ).ContinueWith( _ =>
+      {
+        alert = null;
+        _ = InvokeAsync( StateHasChanged );
+      } );
     } );
   }
 }
