@@ -116,7 +116,7 @@ namespace Toast.Core.Services
 
       if ( response.IsSuccessStatusCode )
       {
-        var agentResponse = await response.Content.ReadFromJsonAsync<AgentResponse>();
+        var agentResponse = await response.Content.ReadFromJsonAsync<AgentResponse>( token );
         if ( agentResponse == null )
           throw new Exception( "Сервер вернул null" );
         return agentResponse;
@@ -124,7 +124,7 @@ namespace Toast.Core.Services
       else
       {
         // Обработка ошибок (например, 401 Unauthorized или 500 Server Error)
-        var errorContent = await response.Content.ReadAsStringAsync();
+        var errorContent = await response.Content.ReadAsStringAsync( token );
         throw new Exception( $"Ошибка сервера: {response.StatusCode}. Детали: {errorContent}" );
       }
     }
