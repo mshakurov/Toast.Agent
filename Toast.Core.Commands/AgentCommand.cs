@@ -11,4 +11,9 @@ public sealed class AgentCommand
   public string Type { get; set; } = string.Empty;
 
   public string JsonParameters { get; set; } = string.Empty;
+
+  public override string? ToString()
+  {
+    return $"{Id}, {Type}: {JsonParameters}";
+  }
 }

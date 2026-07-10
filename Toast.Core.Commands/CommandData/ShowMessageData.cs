@@ -12,5 +12,10 @@ namespace Toast.Core.Commands.CommandData
     public string Title { get; set; } = string.Empty;
     public int Duration { get; set; } = 0;
     public bool WaitIfShow { get; set; } = false;
+
+    public override string ToString()
+    {
+      return $"{Title} '{Message}' {Duration}{(WaitIfShow ? " (Wait)" : string.Empty)}";
+    }
   }
 }
