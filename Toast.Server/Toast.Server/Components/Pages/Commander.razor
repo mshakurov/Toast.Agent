@@ -1,0 +1,36 @@
+﻿@page "/commander"
+@using Toast.Server.Components.Shared.TabControl
+
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize]
+
+<PageTitle>Commander</PageTitle>
+
+<h3>Commander</h3>
+
+<AuthorizeView>
+
+  <TabControl ActiveTabOnStart="@selectedComponent">
+    <Tab Name="@PageComponents.SendCommands" Hint="Выполнение команд на клиентах">
+      <SendCommands />
+    </Tab>
+    <Tab Name="@PageComponents.Test1">
+      Test 1
+    </Tab>
+    <Tab Name="@PageComponents.Test2">
+      Test 2
+    </Tab>
+  </TabControl>
+</AuthorizeView>
+
+@code {
+  enum PageComponents
+  {
+    SendCommands,
+    Test1,
+    Test2
+  }
+  PageComponents selectedComponent = PageComponents.SendCommands;
+
+}

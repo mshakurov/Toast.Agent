@@ -1,0 +1,113 @@
+﻿@using System.Text
+<CascadingValue Value="this" IsFixed="true">
+  @* Скрытый рендер для инициализации и сбора всех дочерних Tab *@
+  <div style="display:none">@ChildContent</div>
+</CascadingValue>
+
+@if ( Tabs.Count > 0 )
+{
+  @* Навигационная панель в стиле Bootstrap *@
+  <ul class="nav nav-pills mb-3">
+    @foreach ( var _tab in Tabs )
+    {
+      var tab = _tab;
+
+      var isLinkActive = tab.Name!.Equals(ActiveTabName);
+      <li class="nav-item">
+        <button type="button"
+                class="nav-link @(isLinkActive ? "active" : "")"
+                title="@(string.IsNullOrEmpty( tab.Hint ) ? tab.Title : tab.Hint)"
+                @onclick="() => SetActiveTab( tab.Name! )">
+          @(string.IsNullOrEmpty( tab.Title ) ? tab.NameStr : tab.Title)
+        </button>
+      </li>
+    }
+  </ul>
+
+  @* Контент активной вкладки *@
+  <div class="tab-content border p-3 rounded">
+    @foreach ( var _tab in Tabs )
+    {
+      var tab = _tab;
+
+      if ( tab.Name!.Equals(ActiveTabName) )
+      {
+        <div class="tab-pane active">
+          @tab.ChildContent
+        </div>
+      }
+    }
+  </div>
+}
+
+@* <textarea rows="10" , cols="300">@log.ToString()</textarea> *@
+
+@code {
+  [Parameter]
+  public RenderFragment? ChildContent { get; set; }
+
+  [Parameter]
+  public object? ActiveTabOnStart { get; set; }
+
+  [Parameter]
+  public EventCallback<object> OnActiveTabChanged { get; set; }
+
+  public List<Tab> Tabs { get; set; } = new();
+
+  public object? ActiveTabName { get; private set; }
+
+  // StringBuilder log = new();
+
+  public void AddTab( Tab tab )
+  {
+    // log.AppendLine($"AddTab({tab.NameStr})");
+
+    if ( !Tabs.Exists( t => t.Name!.Equals(tab.Name) ) )
+    {
+      Tabs.Add( tab );
+      StateHasChanged();
+
+      // log.AppendLine( $"AddTab: Tab added '{tab.NameStr}'" );
+    }
+    else
+      throw new ArgumentOutOfRangeException($"Duplicate Tab.Name '{tab.Name}'");
+  }
+
+  protected override void OnInitialized()
+  {
+    // log.AppendLine( $"OnInitialized" );
+  }
+
+  protected override void OnParametersSet()
+  {
+    // log.AppendLine( $"OnParametersSet" );
+
+    if ( ActiveTabOnStart != null )
+    {
+      ActiveTabName = ActiveTabOnStart;
+
+      // log.AppendLine( $"OnParametersSet: ActiveTabOnStart='{ActiveTabOnStart}'" );
+    }
+
+    // Если стартовая вкладка не задана, берем первую попавшуюся
+    if ( ActiveTabName == null && Tabs.Count > 0 )
+    {
+      ActiveTabName = Tabs[0].Name;
+
+      // log.AppendLine( $"OnParametersSet: ActiveTabName is null and set to {ActiveTabName}" );
+    }
+  }
+
+  private async Task SetActiveTab( object tabName )
+  {
+    // log.AppendLine( $"SetActiveTab({tabName}) (ActiveTabName={ActiveTabName})" );
+
+    if ( ActiveTabName == null || !ActiveTabName.Equals( tabName ) )
+    {
+      ActiveTabName = tabName;
+      await OnActiveTabChanged.InvokeAsync( tabName );
+
+      // log.AppendLine( $"SetActiveTab: Active tab changed ({ActiveTabName})" );
+    }
+  }
+}
