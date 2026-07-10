@@ -19,7 +19,7 @@ internal class ShowMessageService : IHostShowMessage
       {
         // 1. Регистрируем ожидание на 10 секунд и передаем делегат (OnFinishOrTimeOut)
         Guid waiterId = ActivitySignalBridge.RegisterWaiter(
-            TimeSpan.FromSeconds( duration ),
+            TimeSpan.FromSeconds( duration + 5 ),
             result => onResult($"TimedOut: {result.timedOut}, {result.result}")
         );
 
