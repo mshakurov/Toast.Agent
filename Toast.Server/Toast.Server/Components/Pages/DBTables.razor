@@ -1,4 +1,5 @@
 ﻿@using Microsoft.EntityFrameworkCore
+@using Toast.Server.Api
 @using Toast.Server.Data
 @using Toast.Server.Components.Shared.MyTable;
 @inject IDbContextFactory<ApplicationDbContext> dbFactory
@@ -15,7 +16,7 @@
       </div>
       <div class="mb-3">
         <label for="type" class="form-label">Selected type:</label>
-        <select id="type" class="form-select" aria-label="Default select example" @onchange=@SelectedTypeChanged >
+        <select id="type" class="form-select" aria-label="Default select example" @onchange=@SelectedTypeChanged>
           @foreach ( var _type in types )
           {
             var type = _type;
@@ -42,16 +43,16 @@
                 var current = context;
               }
               <td>
-                <button class="btn btn-outline-danger btn-sm" 
-                  @onclick="@(async () => await DeleteRow(current))" 
-                  title="Удалить запись"
-                  disabled="@selectedType.Deleting">
+                <button class="btn btn-outline-danger btn-sm"
+                        @onclick="@(async () => await DeleteRow( current ))"
+                        title="Удалить запись"
+                        disabled="@selectedType.Deleting">
                   <i class="bi bi-trash"></i>
                 </button>
               </td>
               @foreach ( var propName in selectedType.GetPropNames() )
               {
-                var text = current.GetType().GetProperty( propName )?.GetValue( current )?.ToString();
+                var text = current.GetType().GetProperty( propName )?.GetValue( current ).FormatValue();
                 <td style="max-width:30rem">@text</td>
               }
             </TableRow>

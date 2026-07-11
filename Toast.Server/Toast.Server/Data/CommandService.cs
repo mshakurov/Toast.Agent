@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 using Toast.Core.Commands;
 using Toast.Core.Commands.CommandData;
+using Toast.Server.Api;
 using Toast.Server.Data.Models;
 
 namespace Toast.Server.Data
@@ -65,17 +66,17 @@ namespace Toast.Server.Data
             dbContext.RemoveRange( commandsFor );
             //_ = Task.Run( async () =>
             //{
-              try
-              {
-                await dbContext.SaveChangesAsync( token );
-              }
-              catch ( Exception exSave )
-              {
-                Console.BackgroundColor = ConsoleColor.Red;
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine( $"### Ошибка сохранения удалений AgentCommandFor после отправки команд: {exSave}" );
-                Console.ResetColor();
-              }
+            try
+            {
+              await dbContext.SaveChangesAsync( token );
+            }
+            catch ( Exception exSave )
+            {
+              Console.BackgroundColor = ConsoleColor.Red;
+              Console.ForegroundColor = ConsoleColor.Yellow;
+              Console.WriteLine( $"### Ошибка сохранения удалений AgentCommandFor после отправки команд: {exSave}" );
+              Console.ResetColor();
+            }
             //} );
           }
           catch ( Exception ex )
@@ -109,6 +110,10 @@ namespace Toast.Server.Data
 
     internal async Task SetResults( AgentResult agentResult, CancellationToken token = default )
     {
+      Console.ForegroundColor = ConsoleColor.Yellow;
+      Console.WriteLine( $"SetResults: agentResult: {agentResult.AgentId}, {agentResult.Results.FormatValue()}" );
+      Console.ResetColor();
+
       using var dbContext = await dbFactory.CreateDbContextAsync();
 
       var agentClient = await dbContext.AgentClient.FindAsync( [agentResult.AgentId], token );
@@ -117,9 +122,40 @@ namespace Toast.Server.Data
         agentClient = dbContext.AgentClient.Add( new Models.AgentClient() { ClientId = agentResult.AgentId } ).Entity;
         await dbContext.SaveChangesAsync( token );
         ClientAddedEvent?.Invoke( this, agentResult.AgentId );
+
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine( $"SetResults: Client added: {agentResult.AgentId}" );
+        Console.ResetColor();
       }
 
-      await dbContext.AgentResultDB.AddAsync( AgentResultDB.From( agentResult ) );
+      var commandIdHash = agentResult.Results.Select( r => r.CommandId ).ToHashSet();
+      foreach ( var r in await dbContext.AgentResultDB.Where( c => c.AgentId == agentResult.AgentId ).Include( c => c.Results ).SelectMany( c => c.Results )
+        .Where( r => !commandIdHash.Contains( r.CommandId ) )
+        .ToListAsync() )
+      {
+        commandIdHash.Remove( r.CommandId );
+      }
+
+      if ( commandIdHash.Count > 0 )
+      {
+        var added = dbContext.AgentResultDB.Add( new AgentResultDB { AgentId = agentResult.AgentId, Results = agentResult.Results.Where( r => commandIdHash.Contains( r.CommandId ) ).ToList() } );
+
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine( $"SetResults: added: Id {added.Entity.Id}: {added.Entity.AgentId}, Count: {added.Entity.Results.Count}" );
+        Console.ResetColor();
+
+        await dbContext.SaveChangesAsync( token );
+
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine( $"SetResults: Saved to DB: {added.Entity.AgentId}, Count: {added.Entity.Results.Count}" );
+        Console.ResetColor();
+      }
+      else
+      {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine( $"SetResults: Duplicate result: {agentResult.AgentId}, Count: {agentResult.Results.Count}" );
+        Console.ResetColor();
+      }
     }
 
     public class State
