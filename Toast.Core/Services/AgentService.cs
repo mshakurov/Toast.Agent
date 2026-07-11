@@ -76,7 +76,12 @@ namespace Toast.Core.Services
       _context.Logger.Info( this, $"Executing {response.Commands.Count} commands..." );
       _context.AgentStatusListener.ReportStatus( AgentState.Executing );
 
-      var results = new List<CommandResult>( _postponedResults );
+      // переносим текущие результаты на отправку
+      var results = new List<CommandResult>();
+      var currentCount = _postponedResults.Count;
+      while ( results.Count < currentCount && _postponedResults.TryDequeue( out var cmdRes ) )
+        results.Add( cmdRes );
+
       var dispatcher = new CommandDispatcher( CommandHandlerFactory.CreateDefault( _serviceContext, _context ), token );
       foreach ( var command in response.Commands )
       {
@@ -86,9 +91,15 @@ namespace Toast.Core.Services
         results.Add( result );
       }
 
-      await pollingService.ReportAsync(
-          results,
-          token );
+      if ( results.Count > 0 )
+      {
+        await pollingService.ReportAsync(
+            results,
+            token );
+
+        if ( results.Count > 0 )
+          results.ForEach( r => _postponedResults.Enqueue( r ) );
+      }
     }
 
     class AgentServiceContext( AgentService service ) : IAgentServiceContext

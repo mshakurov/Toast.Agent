@@ -197,17 +197,60 @@ namespace Toast.Core.Services
       _context.Logger.Info( this, $"Sending {results.Count}  answers ..." );
       _context.AgentStatusListener.ReportStatus( AgentState.Answering );
 
-      //foreach ( var result in results )
-      //{
-      //  try
-      //  {
-      //    HttpResponseMessage response = await client.PostAsJsonAsync( "api/data/commands", request, token );
+      if ( _context.Settings.LastSuccessfulServerIndex > _context.Settings.Servers.Length - 1 )
+        _context.Settings.LastSuccessfulServerIndex = 0;
 
-      //  }
-      //  catch ( Exception ex )
-      //  {
-      //  }
-      //}
+      var servers = _context.Settings.Servers.Select( ( s, i ) => (s, i: ( ushort ) i) ).Take( ushort.MaxValue ).Where( s => !string.IsNullOrWhiteSpace( s.s.HostURL ) && s.s.LoginModel != null && !string.IsNullOrWhiteSpace( s.s.LoginModel.Email ) ).OrderBy( s => s.i == _context.Settings.LastSuccessfulServerIndex ? 1 : 2 ).ThenBy( s => s.i ).ToArray();
+      if ( servers.Length == 0 )
+      {
+        throw new Exception( $"# Не найден ни один правильно настроенный сервер" );
+      }
+
+      AgentResult agentResult = new AgentResult { AgentId = _context.Settings.HostUID, Results = results };
+      foreach ( var server in servers )
+      {
+        _context.Logger.Info( this, $"Answering to server {server.s.GetKey()}..." );
+        _context.AgentStatusListener.ReportStatus( AgentState.Answering );
+
+        var setsChanged = false;
+
+        var result = await TryProcess( server.s, async ( client, token ) =>
+        {
+          HttpResponseMessage response = await client.PostAsJsonAsync( "api/data/results", agentResult, token );
+
+          if ( response.IsSuccessStatusCode )
+          {
+            results.Clear();
+
+            return true;
+          }
+          else
+          {
+            // Обработка ошибок (например, 401 Unauthorized или 500 Server Error)
+            var errorContent = await response.Content.ReadAsStringAsync( token );
+            throw new Exception( $"Ошибка сервера: {response.StatusCode}. Детали: {errorContent}" );
+          }
+        }, token );
+
+        if ( server.s.LastAuthToken != result.LastAuthToken )
+        {
+          server.s.LastAuthToken = result.LastAuthToken;
+          setsChanged = true;
+        }
+
+        if ( result.result )
+          if ( _context.Settings.LastSuccessfulServerIndex != server.i )
+          {
+            _context.Settings.LastSuccessfulServerIndex = server.i;
+            setsChanged = true;
+          }
+
+        if ( setsChanged )
+          _ = _context.Settings.Update();
+
+        if ( result.result )
+          return;
+      }
 
       await Task.CompletedTask;
     }
