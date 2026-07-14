@@ -2,6 +2,8 @@
 using System.Text.Json;
 using System.Threading.Tasks;
 
+using Humanizer;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -30,17 +32,21 @@ namespace Toast.Server.Api.Controllers
 
     [HttpGet( "items" )]
     public IActionResult GetProtectedData() 
-      => Ok( commandService.GetProtectedData( new TestDataItem( 3, "Пользователь", User.FindFirstValue( ClaimTypes.NameIdentifier )?.ToString() ?? string.Empty ) ) );
+      => Ok( commandService.GetProtectedData( [new TestDataItem( 3, "Пользователь", User.FindFirstValue( ClaimTypes.NameIdentifier )?.ToString() ?? string.Empty )], GetInfo( this.ControllerContext ) ) );
 
     [HttpPost( "commands" )]
     public async Task<IActionResult> GetCommands( [FromBody] AgentRequest request )
-      => Ok( await commandService.GetCommands( request ) );
+      => Ok( await commandService.GetCommands( request, GetInfo( this.ControllerContext ) ) );
 
     [HttpPost( "results" )]
     public async Task<IActionResult> SetResults( [FromBody] AgentResult agentResult )
     {
-      await commandService.SetResults( agentResult );
+      await commandService.SetResults( agentResult, GetInfo(this.ControllerContext) );
       return Ok();
     }
+
+    public static CommandService.ClientInfo GetInfo( ControllerContext ControllerContext )
+      =>
+        new ( ControllerContext.HttpContext.Connection.RemoteIpAddress?.ToString(), ControllerContext.HttpContext.Connection.RemotePort, ControllerContext.HttpContext.Connection.LocalPort, ControllerContext.HttpContext.Features.Humanize());
   }
 }

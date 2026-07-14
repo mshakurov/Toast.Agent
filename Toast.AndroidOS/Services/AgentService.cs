@@ -76,6 +76,7 @@ internal sealed class AgentService : Service
 
   void StartForegroundBefore29( AgentState state )
   {
+    StopForeground( StopForegroundFlags.Remove );
     StartForeground(
       NotificationHelper.NotificationId,
       NotificationHelper.CreateNotification(
@@ -86,6 +87,7 @@ internal sealed class AgentService : Service
   [SupportedOSPlatform( "android29.0" )]
   void StartForeground29( AgentState state )
   {
+    StopForeground( StopForegroundFlags.Remove );
     StartForeground(
       NotificationHelper.NotificationId,
       NotificationHelper.CreateNotification(

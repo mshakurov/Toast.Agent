@@ -24,7 +24,10 @@ namespace Toast.Core.Commands
 
     public LoginModel? LoginModel { get; set; }
 
-    public string GetKey() => $"[{LoginModel?.Email}:{LoginModel?.Password}]@[{HostURL}:{Port}/{APIBasePath}]";
+    public string GetKey() => $"[{HostURL}:{Port}/{APIBasePath}]@[{LoginModel?.Email}:{LoginModel?.Password}]";
+
+    public override string ToString() => GetKey();
+       
 
     [JsonIgnore]
     public AuthResponse? LastAuthToken { get; set; }

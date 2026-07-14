@@ -32,9 +32,9 @@ namespace Toast.Core.Services
       catch ( Exception ex )
       {
         // Обработка ошибок сети
-        _logger.Error(this, $"Ошибка загрузки данных: {ex}" );
+        _logger.Error(this, $"Ошибка загрузки данных: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}" );
 
-        return ([], ex.ToString());
+        return ([], $"{ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}");
       }
     }
   }

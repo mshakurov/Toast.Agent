@@ -48,9 +48,9 @@
       {
         try
         {
-          await commandService.SendAsync( @commandService.Current.SelectedCommandClients, showMessageData.CloneEx() );
+          var commands = await commandService.EnqueueCommandAsync( @commandService.Current.SelectedCommandClients, showMessageData.CloneEx() );
 
-          ShowAlert( "Команда успешно поставлена в очередь", 5, 1 );
+          ShowAlert( $"Команда успешно поставлена в очередь для {commands.Count}", 5, 1 );
         }
         catch ( Exception ex )
         {

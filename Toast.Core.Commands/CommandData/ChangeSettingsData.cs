@@ -1,6 +1,6 @@
 ﻿namespace Toast.Core.Commands.CommandData;
 
-public class ChangeSettingsData
+public class ChangeSettingsData : CommandDataBase
 {
   public ushort? PollingInterval { get; set; }
   public RemoteServer[]? AddServers { get; set; }

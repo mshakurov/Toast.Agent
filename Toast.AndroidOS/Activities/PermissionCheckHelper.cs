@@ -20,13 +20,22 @@ namespace Toast.AndroidOS.Activities
     private int requestPermissionPostNotifyCount = 0;
     private int requestPermissionCheckNetworkCount = 0;
     private int requestPermissionUseFullScreenIntent = 0;
+    private int requestsCount = 0;
 
-    public bool CheckPermissions() => CheckPermissionsInternal( true );
+    public bool StartCheckPermissions()
+    {
+      _checkTask = null;
+      requestsCount = 0;
+      return CheckPermissionsInternal( true );
+    }
 
     private bool CheckPermissionsInternal( bool askUser )
     {
       bool access = true;
       List<string> log = new();
+
+      requestsCount++;
+      _owner.PrependLine( _textView, "Checking permissions..." );
 
       // проверка права управлять уведомлениями
       if ( OperatingSystem.IsAndroidVersionAtLeast( 33 ) )
@@ -133,11 +142,10 @@ namespace Toast.AndroidOS.Activities
         access &= granted == Android.Content.PM.Permission.Granted;
       }
 
+      _owner.SetTextFor( _textView, string.Join( ", ", log ) + System.Environment.NewLine + $"(checks:{requestsCount})" );
+
       if ( askUser && !access && _checkTask == null )
         _checkTask = Task.Factory.StartNew( CheckPermissionsTask, _token );
-
-      if ( _textView != null )
-        _textView.Text = string.Join( ", ", log );
 
       return access;
     }
@@ -149,6 +157,9 @@ namespace Toast.AndroidOS.Activities
       {
         try
         {
+          Task.Delay( 5000, _token ).Wait( _token );
+          _logger?.Debug( this, $"CheckPermissionsTask tick" );
+
           bool access = true;
           var tcs = new TaskCompletionSource();
           _owner.RunOnUiThread( () =>
@@ -165,15 +176,12 @@ namespace Toast.AndroidOS.Activities
           } );
           tcs.Task.Wait( _token );
 
-          if ( access )
+          if ( access || requestsCount >= 5 )
           {
             _checkTask = null;
             _logger?.Debug( this, $"CheckPermissionsTask exit" );
             break;
           }
-
-          Task.Delay( 1000, _token ).Wait( _token );
-          _logger?.Debug( this, $"CheckPermissionsTask tick" );
         }
         catch ( Exception ex )
         {

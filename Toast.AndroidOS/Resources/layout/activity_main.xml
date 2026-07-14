@@ -5,7 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
 		android:orientation="vertical"
-		android:gravity="center"
     android:padding="20dp">
 
 
@@ -40,7 +39,7 @@
 				android:text="@string/buttonSets"/>
 
 	</LinearLayout>
-	
+
 	<!-- Контейнер для кнопок вверху экрана -->
 	<LinearLayout
 			android:id="@+id/buttonContainer2"
@@ -94,14 +93,42 @@
 
 	</LinearLayout>
 
-	<TextView
-			android:id="@+id/app_text"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:layout_centerInParent="true"
-			android:layout_below="@id/buttonContainer2"
-			android:text="@string/app_text"
+	<ScrollView
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:layout_weight="2"
+		android:layout_below="@id/buttonsLayout"
+		android:layout_alignParentBottom="true"
+		android:layout_marginTop="12dp"
+		android:textColor="#D5D5F5"
+		android:scrollbars="vertical">
+		<TextView
+				android:id="@+id/app_text"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:textIsSelectable="true"
+				android:layout_below="@id/buttonContainer2"
+				android:text="@string/app_text"
     />
+	</ScrollView>
 
+	<ScrollView
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:layout_weight="3"
+		android:layout_below="@id/buttonsLayout"
+		android:layout_alignParentBottom="true"
+		android:layout_marginTop="12dp"
+		android:background="#F5D5D5"
+		android:scrollbars="vertical">
+		<TextView
+				android:id="@+id/perm_text"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:textIsSelectable="true"
+				android:layout_below="@id/buttonContainer2"
+				android:text="@string/app_text"
+    />
+	</ScrollView>
 
 </LinearLayout>

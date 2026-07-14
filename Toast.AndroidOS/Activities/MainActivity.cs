@@ -1,8 +1,4 @@
-﻿
-
-
-
-using Java.Lang;
+﻿using Java.Lang;
 
 using Toast.AndroidOS.Bootstrap;
 using Toast.AndroidOS.Models;
@@ -30,14 +26,14 @@ namespace Toast.AndroidOS.Activities
 
       SetupControls();
 
-      _permissionCheckHelper = new PermissionCheckHelper( this, _logger, textView, _ctsCheckPermissions.Token );
+      _permissionCheckHelper = new PermissionCheckHelper( this, _logger, FindViewById<TextView>( Resource.Id.perm_text ), _ctsCheckPermissions.Token );
     }
 
     protected override void OnStart()
     {
       base.OnStart();
 
-      _permissionCheckHelper?.CheckPermissions();
+      _permissionCheckHelper?.StartCheckPermissions();
     }
 
     protected override void OnStop()
@@ -97,7 +93,7 @@ namespace Toast.AndroidOS.Activities
         {
           _logger.Info( this, $"btnTestShowMessageService, Creating Intent" );
 
-          new ShowMessageService(_logger).StartShowMessage( "Тестовое сообщение\nс переносом строки", "♥♥♥", 10, exception =>
+          new ShowMessageService( _logger ).StartShowMessage( "Тестовое сообщение\nс переносом строки", "♥♥♥", 10, exception =>
           {
             _logger.Info( this, $"btnTestShowMessageService: onResult('{exception}')" );
           } );
@@ -160,47 +156,67 @@ namespace Toast.AndroidOS.Activities
           {
             _logger.Info( this, $"buttonTestRequest, Creating test service ... " );
 
-            string text;
-
-            var servers = new HostSettings().GetValidServers();
+            var settings = CompositionRoot.GetSingletonSettingsService().LoadSettings();
+            var servers = settings.GetValidServers().Select( ( s, i ) => (s, i: (ushort)i) ).OrderBy( s => s.i == settings.LastSuccessfulServerIndex ? 1 : 2 ).ThenBy( s => s.i ).ToArray();
             if ( servers.Length == 0 )
-              text = $"# Не найден ни один правильно настроенный сервер";
+            {
+              this.RunOnUiThread( () =>
+              {
+                if ( textView != null )
+                {
+                  textView.Text = $"# Не найден ни один правильно настроенный сервер";
+                }
+              } );
+            }
             else
             {
-              try
+              foreach ( var server in servers )
               {
-                var server = servers.Last();
+                try
+                {
+                  this.PrependLine( textView, $"Тестируем {server} ...", "-----" );
 
-                var srv = CompositionRoot.CreateTestServerAuthorizedRequestService( server.BaseUrl, server.LoginModel!, _logger );
+                  var srv = CompositionRoot.CreateTestServerAuthorizedRequestService( server.s.BaseUrl, server.s.LoginModel!, _logger );
 
-                _logger.Info( this, $"buttonTestRequest, Requesting test data..." );
-                
-                var result = srv.LoadItemsFromServerAsync().Result;
-                
-                StringBuilder lines = new();
-                lines.Append( $"Server: {server.GetKey()}." );
-                lines.Append( System.Environment.NewLine + $"Result ({result.Items.Count}):" + System.Environment.NewLine + string.Join( System.Environment.NewLine, result.Items.Select( r => $"- {r.Id}|{r.Name}|{r.Value}" ) ) );
-                if ( !string.IsNullOrEmpty( result.Exception ) )
-                  lines.Append( System.Environment.NewLine + $"Exception: {result.Exception}" );
-                text = lines.ToString() ?? string.Empty;
+                  _logger.Info( this, $"buttonTestRequest, Requesting test data {server}..." );
+
+                  (List<Core.Commands.TestDataItem> Items, string? Exception) result = srv.LoadItemsFromServerAsync().Result;
+
+                  _logger.Info( this, $"buttonTestRequest, Received test data result {server}: Item count: {result.Items.Count}, HasExcept: {result.Exception != null}" );
+
+                  StringBuilder lines = new();
+                  lines.Append( $"Server: {server.s.GetKey()}." );
+                  lines.Append( System.Environment.NewLine + $"Result ({result.Items.Count}):" + System.Environment.NewLine + string.Join( System.Environment.NewLine, result.Items.Select( r => $"- {r.Id}|{r.Name}|{r.Value}" ) ) );
+                  if ( !string.IsNullOrEmpty( result.Exception ) )
+                    lines.Append( System.Environment.NewLine + $"Exception: {result.Exception}" );
+                  var text = $"Сервер {server} вернул: {lines.ToString() ?? "[ничего]"}";
+                  this.PrependLine( textView, text, "-----" );
+                  _logger.Info( this, $"# buttonTestRequest, Requesting test data result: {text}" );
+
+                  if ( result.Exception == null )
+                  {
+                    if ( server.i != settings.LastSuccessfulServerIndex )
+                    {
+                      settings.LastSuccessfulServerIndex = server.i;
+                      settings.Update();
+                    }
+                    break;
+                  }
+                }
+                catch ( System.Exception ex )
+                {
+                  var text = $"Exception: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}";
+                  _logger.Error( this, $"# buttonTestRequest, Requesting test data error: {text}" );
+                  this.PrependLine( textView, text, "-----" );
+                }
               }
-              catch ( System.Exception ex )
+
+              this.RunOnUiThread( () =>
               {
-                text = $"Exception: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}";
-              }
+                btnTestRequest.Enabled = true;
+              } );
+              this.PrependLine( textView, "Тесты завершены", "-----" );
             }
-
-            _logger.Error( this, text );
-
-            this.RunOnUiThread( () =>
-            {
-              btnTestRequest.Enabled = true;
-
-              if ( textView != null )
-              {
-                textView.Text = text;
-              }
-            } );
           } );
         };
       }
@@ -259,7 +275,7 @@ namespace Toast.AndroidOS.Activities
       {
         btnStart.Click += ( sender, e ) =>
         {
-          _permissionCheckHelper?.CheckPermissions();
+          _permissionCheckHelper?.StartCheckPermissions();
 
           _logger.Debug( this, $"buttonStart, Creating Intent" );
 

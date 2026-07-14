@@ -21,7 +21,7 @@ namespace Toast.Server.Data
       this.dbFactory = dbFactory;
     }
 
-    public List<TestDataItem> GetProtectedData( params TestDataItem[] addDefaultItems )
+    public List<TestDataItem> GetProtectedData( TestDataItem[] addDefaultItems, ClientInfo? clientInfo = null )
     {
       var list = new List<TestDataItem>
         {
@@ -39,7 +39,7 @@ namespace Toast.Server.Data
       return await getter( dbContext );
     }
 
-    public async Task<AgentResponse> GetCommands( AgentRequest request, CancellationToken token = default )
+    public async Task<AgentResponse> GetCommands( AgentRequest request, ClientInfo? clientInfo = null, CancellationToken token = default )
     {
       //List<AgentCommand> commands =
       //  [
@@ -58,32 +58,20 @@ namespace Toast.Server.Data
       }
       else
       {
-        var commandsFor = await dbContext.AgentCommandFor.Include( c => c.Client ).Include( c => c.Command ).Where( ac => ac.Client.ClientId == request.AgentId ).ToListAsync( token );
+        var commandsFor = await dbContext.AgentCommandFor.Include( c => c.Client ).Include( c => c.Command ).Where( ac => ac.Client.ClientId == request.AgentId && ac.Sent == null ).ToListAsync( token );
         if ( commandsFor.Count > 0 )
         {
+          var now = DateTime.UtcNow;
+          commandsFor.ForEach( c => c.Sent = now );
           try
           {
-            dbContext.RemoveRange( commandsFor );
-            //_ = Task.Run( async () =>
-            //{
-            try
-            {
-              await dbContext.SaveChangesAsync( token );
-            }
-            catch ( Exception exSave )
-            {
-              Console.BackgroundColor = ConsoleColor.Red;
-              Console.ForegroundColor = ConsoleColor.Yellow;
-              Console.WriteLine( $"### Ошибка сохранения удалений AgentCommandFor после отправки команд: {exSave}" );
-              Console.ResetColor();
-            }
-            //} );
+            await dbContext.SaveChangesAsync( token );
           }
-          catch ( Exception ex )
+          catch ( Exception exSave )
           {
             Console.BackgroundColor = ConsoleColor.Red;
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine( $"### Ошибка удаления AgentCommandFor после отправки команд: {ex}" );
+            Console.WriteLine( $"### Ошибка сохранения отправленных AgentCommandFor после отправки команд: {exSave}" );
             Console.ResetColor();
           }
         }
@@ -94,21 +82,30 @@ namespace Toast.Server.Data
     public async Task<AgentClient[]> GetAllAgentClients( CancellationToken token = default )
       => await InContext( async dbContext => await dbContext.AgentClient.ToArrayAsync( token ) );
 
-    public async Task<List<AgentCommandFor>> SendAsync( List<string> selectedCommandClients, ShowMessageData showMessageData, CancellationToken? token = default )
+    public async Task<List<AgentCommandFor>> EnqueueCommandAsync( List<string> selectedCommandClients, CommandDataBase commandData, CancellationToken? token = default )
     {
       List<AgentCommandFor> added = new( selectedCommandClients.Count );
 
       using var dbContext = await dbFactory.CreateDbContextAsync();
 
       foreach ( var clientID in selectedCommandClients )
-        added.Add( dbContext.AgentCommandFor.Add( new AgentCommandFor() { ClientId = clientID, Command = new AgentCommand() { Id = Guid.NewGuid(), Type = CommandTypes.ShowMessage, JsonParameters = JsonSerializer.Serialize( showMessageData ) } } ).Entity );
+        added.Add( dbContext.AgentCommandFor.Add( new AgentCommandFor()
+        {
+          ClientId = clientID,
+          Command = new AgentCommand()
+          {
+            Id = Guid.NewGuid(),
+            Type = CommandTypes.ShowMessage,
+            JsonParameters = JsonSerializer.Serialize( commandData )
+          }
+        } ).Entity );
 
       await dbContext.SaveChangesAsync( token ?? CancellationToken.None );
 
       return added;
     }
 
-    internal async Task SetResults( AgentResult agentResult, CancellationToken token = default )
+    internal async Task SetResults( AgentResult agentResult, ClientInfo? clientInfo = null, CancellationToken token = default )
     {
       Console.ForegroundColor = ConsoleColor.Yellow;
       Console.WriteLine( $"SetResults: agentResult: {agentResult.AgentId}, {agentResult.Results.FormatValue()}" );
@@ -166,5 +163,7 @@ namespace Toast.Server.Data
 
       public string? SelectedDBTablesTypeFullName { get; set; }
     }
+
+    public record ClientInfo (string? remoteIpAddress, int remotePort, int localPort, string features);
   }
 }

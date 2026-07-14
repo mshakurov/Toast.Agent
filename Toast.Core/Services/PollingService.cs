@@ -36,6 +36,8 @@ namespace Toast.Core.Services
 
       foreach ( var server in servers )
       {
+        token.ThrowIfCancellationRequested();
+
         //var checkError = await CheckHostPort( server.s.HostURL!, server.s.Port, token );
         //if ( checkError != null )
         //{
@@ -134,6 +136,8 @@ namespace Toast.Core.Services
       //}
 
       HttpResponseMessage response = await client.PostAsJsonAsync( "api/data/commands", request, token );
+
+      token.ThrowIfCancellationRequested();
 
       if ( response.IsSuccessStatusCode )
       {

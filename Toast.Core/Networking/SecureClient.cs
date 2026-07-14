@@ -39,6 +39,7 @@ namespace Toast.Core.Networking
 
       // 1. Клиент чисто для аутентификации (ему не нужны заголовки)
       baseClient = new HttpClient( httpClientHandler ) { BaseAddress = new Uri( baseServerUrl ) };
+      baseClient.Timeout = TimeSpan.FromSeconds( 10 );
       authService = new AuthService( credentials, lastAuthToken, baseClient );
 
       // 2. Собираем защищенный клиент, передавая ему наш кастомный Handler
@@ -50,7 +51,8 @@ namespace Toast.Core.Networking
       // ЭТИМ клиентом мы пользуемся во всем Android-приложении для работы с данными
       _secureDataClient = new HttpClient( jwtHandler )
       {
-        BaseAddress = new Uri( baseServerUrl )
+        BaseAddress = new Uri( baseServerUrl ),
+        Timeout = TimeSpan.FromSeconds( 10 ),
       };
     }
 
