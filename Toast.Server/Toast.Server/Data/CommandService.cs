@@ -33,12 +33,6 @@ namespace Toast.Server.Data
       return list;
     }
 
-    public async Task<TResult> InContext<TResult>( Func<ApplicationDbContext, Task<TResult>> getter )
-    {
-      using var dbContext = await dbFactory.CreateDbContextAsync();
-      return await getter( dbContext );
-    }
-
     public async Task<AgentResponse> GetCommands( AgentRequest request, ClientInfo? clientInfo = null, CancellationToken token = default )
     {
       //List<AgentCommand> commands =
@@ -153,6 +147,12 @@ namespace Toast.Server.Data
         Console.WriteLine( $"SetResults: Duplicate result: {agentResult.AgentId}, Count: {agentResult.Results.Count}" );
         Console.ResetColor();
       }
+    }
+
+    public async Task<TResult> InContext<TResult>( Func<ApplicationDbContext, Task<TResult>> getter )
+    {
+      using var dbContext = await dbFactory.CreateDbContextAsync();
+      return await getter( dbContext );
     }
 
     public class State

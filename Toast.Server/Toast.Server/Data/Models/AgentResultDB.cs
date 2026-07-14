@@ -12,6 +12,8 @@ namespace Toast.Server.Data.Models
 
     public List<CommandResult> Results { get; set; } = [];
 
+    public DateTime? Received { get; set; }
+
     public static AgentResultDB From( AgentResult agentResult ) 
       => new AgentResultDB { AgentId = agentResult.AgentId, Results = agentResult.Results };
   }
