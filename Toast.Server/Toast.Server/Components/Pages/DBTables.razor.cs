@@ -9,12 +9,18 @@ namespace Toast.Server.Components.Pages
   {
     Microsoft.EntityFrameworkCore.Metadata.IEntityType[] types = [];
     string? alert = null;
+    SelectedInfo? selectedType;
+    bool metadataPropertiesShow = false;
 
     class SelectedInfo
     {
       public Microsoft.EntityFrameworkCore.Metadata.IEntityType Type { get; set; }
 
       public Microsoft.EntityFrameworkCore.Metadata.IProperty[] Properties { get; set; } = [];
+
+      public Microsoft.EntityFrameworkCore.Metadata.IForeignKey[] ReferencingForeignKeys { get; set; } = [];
+
+      public Microsoft.EntityFrameworkCore.Metadata.IForeignKey[] ForeignKeys { get; set; } = [];
 
       public object[] Rows { get; internal set; } = [];
 
@@ -27,10 +33,12 @@ namespace Toast.Server.Components.Pages
         Type = selectedType;
 
         Properties = Type.GetProperties().ToArray();
+
+        ReferencingForeignKeys = Type.GetReferencingForeignKeys().ToArray();
+
+        ForeignKeys = Type.GetDerivedForeignKeys().ToArray();
       }
     }
-
-    SelectedInfo? selectedType;
 
     string typeListInfo => $"Types: {types.Length}: " + string.Join( ", ", types.Select( t => $"[{t.Name} (Flds:{t.GetProperties().Count()})]" ) );
 

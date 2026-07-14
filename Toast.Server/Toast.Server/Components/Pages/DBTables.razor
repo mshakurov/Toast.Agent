@@ -58,6 +58,66 @@
             </TableRow>
           </TableMy>
         </div>
+        <div class="mb-3 form-check">
+          <input type="checkbox" class="form-check-input small" id="metadataPropertiesShow" @bind="@metadataPropertiesShow">
+          <label class="form-check-label small" for="metadataPropertiesShow" @onclick=@(async () => metadataPropertiesShow = !metadataPropertiesShow)>Show Metadata Properties</label>
+        </div>
+      }
+      @if ( metadataPropertiesShow && selectedType != null )
+      {
+        <div class="mb-3">
+          <TableMy TItem="Microsoft.EntityFrameworkCore.Metadata.IProperty" Items="selectedType.Properties" Compact Border>
+            <TableHeader>
+              <th>@(nameof( Microsoft.EntityFrameworkCore.Metadata.IProperty.Name ))</th>
+              <th>@(nameof( Microsoft.EntityFrameworkCore.Metadata.IProperty.IsNullable ))</th>
+              <th>@(nameof( Microsoft.EntityFrameworkCore.Metadata.IProperty.DeclaringType ))</th>
+              <th>@(nameof( Microsoft.EntityFrameworkCore.Metadata.IProperty.ClrType ))</th>
+              <th>@(nameof( Microsoft.EntityFrameworkCore.Metadata.IProperty.ValueGenerated ))</th>
+            </TableHeader>
+            <TableRow>
+              @{
+                var current = context;
+              }
+              <td>@current.Name</td>
+              <td>@current.IsNullable</td>
+              <td>@current.DeclaringType</td>
+              <td>@current.ClrType</td>
+              <td>@current.ValueGenerated</td>
+            </TableRow>
+          </TableMy>
+        </div>
+        <div class="mb-3">
+          References
+          <TableMy TItem="Microsoft.EntityFrameworkCore.Metadata.IForeignKey" Items="selectedType.ForeignKeys" Compact Border>
+            <TableHeader>
+              <th>"Name"</th>
+              <th>"Keys"</th>
+            </TableHeader>
+            <TableRow>
+              @{
+                var current = context;
+              }
+              <td>@current.DeclaringEntityType.Name</td>
+              <td>@string.Join( ",", current.Properties.Select( p => $"{p.Name}" ) )</td>
+            </TableRow>
+          </TableMy>
+        </div>
+        <div class="mb-3">
+          References to this
+          <TableMy TItem="Microsoft.EntityFrameworkCore.Metadata.IForeignKey" Items="selectedType.ReferencingForeignKeys" Compact Border>
+            <TableHeader>
+              <th>"Name"</th>
+              <th>"Keys"</th>
+            </TableHeader>
+            <TableRow>
+              @{
+                var current = context;
+              }
+              <td>@current.PrincipalEntityType.Name</td>
+              <td>@string.Join( ",", current.PrincipalKey.Properties.Select( p => $"{p.Name}" ) )</td>
+            </TableRow>
+          </TableMy>
+        </div>
       }
     </div>
 

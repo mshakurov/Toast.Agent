@@ -52,6 +52,7 @@ namespace Toast.Server.Data
       }
       else
       {
+        agentClient.LastGet = clientInfo?.time ?? DateTime.UtcNow;
         var commandsFor = await dbContext.AgentCommandFor.Include( c => c.Client ).Where( ac => ac.Client.ClientId == request.AgentId && ac.Sent == null ).Include( c => c.Command ).ToListAsync( token );
         if ( commandsFor.Count > 0 )
         {
@@ -119,6 +120,8 @@ namespace Toast.Server.Data
         Console.ResetColor();
       }
 
+      agentClient.LastSet = clientInfo?.time ?? DateTime.UtcNow;
+
       // исключаем принятые результаты из ответа, если вдруг они перепутались между ответами
       var commandIdHashNew = agentResult.Results.Select( r => r.CommandId ).ToHashSet();
       int duplicateCount = 0;
@@ -172,6 +175,6 @@ namespace Toast.Server.Data
       public string? SelectedDBTablesTypeFullName { get; set; }
     }
 
-    public record ClientInfo( string? remoteIpAddress, int remotePort, int localPort, string features );
+    public record ClientInfo( string? remoteIpAddress, int remotePort, int localPort, string features, DateTime time );
   }
 }
