@@ -52,7 +52,7 @@ namespace Toast.Server.Data
       }
       else
       {
-        var commandsFor = await dbContext.AgentCommandFor.Include( c => c.Client ).Include( c => c.Command ).Where( ac => ac.Client.ClientId == request.AgentId && ac.Sent == null ).ToListAsync( token );
+        var commandsFor = await dbContext.AgentCommandFor.Include( c => c.Client ).Where( ac => ac.Client.ClientId == request.AgentId && ac.Sent == null ).Include( c => c.Command ).ToListAsync( token );
         if ( commandsFor.Count > 0 )
         {
           var now = DateTime.UtcNow;
@@ -119,34 +119,42 @@ namespace Toast.Server.Data
         Console.ResetColor();
       }
 
-      var commandIdHash = agentResult.Results.Select( r => r.CommandId ).ToHashSet();
+      // исключаем принятые результаты из ответа, если вдруг они перепутались между ответами
+      var commandIdHashNew = agentResult.Results.Select( r => r.CommandId ).ToHashSet();
+      int duplicateCount = 0;
       foreach ( var r in await dbContext.AgentResultDB.Where( c => c.AgentId == agentResult.AgentId ).Include( c => c.Results ).SelectMany( c => c.Results )
-        .Where( r => !commandIdHash.Contains( r.CommandId ) )
+        .Where( r => !commandIdHashNew.Contains( r.CommandId ) )
         .ToListAsync() )
       {
-        commandIdHash.Remove( r.CommandId );
+        commandIdHashNew.Remove( r.CommandId );
+        duplicateCount++;
       }
 
-      if ( commandIdHash.Count > 0 )
+      var added = dbContext.AgentResultDB.Add( new AgentResultDB
       {
-        var added = dbContext.AgentResultDB.Add( new AgentResultDB { AgentId = agentResult.AgentId, Results = agentResult.Results.Where( r => commandIdHash.Contains( r.CommandId ) ).ToList() } );
+        AgentId = agentResult.AgentId,
+        Results = agentResult.Results.Where( r => commandIdHashNew.Contains( r.CommandId ) ).ToList(),
+        Received = DateTime.Now,
+      } );
 
+      if ( commandIdHashNew.Count > 0 )
+      {
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine( $"SetResults: added: Id {added.Entity.Id}: {added.Entity.AgentId}, Count: {added.Entity.Results.Count}" );
-        Console.ResetColor();
-
-        await dbContext.SaveChangesAsync( token );
-
-        Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.WriteLine( $"SetResults: Saved to DB: {added.Entity.AgentId}, Count: {added.Entity.Results.Count}" );
         Console.ResetColor();
       }
       else
       {
         Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine( $"SetResults: Duplicate result: {agentResult.AgentId}, Count: {agentResult.Results.Count}" );
+        Console.WriteLine( $"SetResults: Duplicated commands: {duplicateCount} (agentId: {added.Entity.AgentId})" );
         Console.ResetColor();
       }
+
+      await dbContext.SaveChangesAsync( token );
+
+      Console.ForegroundColor = ConsoleColor.Yellow;
+      Console.WriteLine( $"SetResults: Saved to DB: {added.Entity.AgentId}, Count: {added.Entity.Results.Count}" );
+      Console.ResetColor();
     }
 
     public async Task<TResult> InContext<TResult>( Func<ApplicationDbContext, Task<TResult>> getter )
@@ -164,6 +172,6 @@ namespace Toast.Server.Data
       public string? SelectedDBTablesTypeFullName { get; set; }
     }
 
-    public record ClientInfo (string? remoteIpAddress, int remotePort, int localPort, string features);
+    public record ClientInfo( string? remoteIpAddress, int remotePort, int localPort, string features );
   }
 }
