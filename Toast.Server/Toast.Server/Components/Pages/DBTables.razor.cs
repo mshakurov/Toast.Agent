@@ -7,6 +7,9 @@ namespace Toast.Server.Components.Pages
 {
   public partial class DBTables
   {
+    [Parameter]
+    public Func<Microsoft.EntityFrameworkCore.Metadata.IEntityType, Type?>? GetRendererType { get; set; }
+
     Microsoft.EntityFrameworkCore.Metadata.IEntityType[] types = [];
     string? alert = null;
     SelectedInfo? selectedType;
@@ -28,15 +31,21 @@ namespace Toast.Server.Components.Pages
 
       public bool Deleting { get; set; }
 
-      public SelectedInfo( Microsoft.EntityFrameworkCore.Metadata.IEntityType selectedType )
+      public object? DeletingRow { get; set; }
+
+      public Type? ComponentType { get; private set; }
+
+      public SelectedInfo( Microsoft.EntityFrameworkCore.Metadata.IEntityType selectedType, Func<Microsoft.EntityFrameworkCore.Metadata.IEntityType, Type?>? getRendererType )
       {
         Type = selectedType;
+
+        ComponentType = getRendererType?.Invoke( Type );
 
         Properties = Type.GetProperties().ToArray();
 
         ReferencingForeignKeys = Type.GetReferencingForeignKeys().ToArray();
 
-        ForeignKeys = Type.GetDerivedForeignKeys().ToArray();
+        ForeignKeys = Type.GetDerivedForeignKeys().Concat( Type.GetForeignKeys() ).ToArray();
       }
     }
 
@@ -65,13 +74,13 @@ namespace Toast.Server.Components.Pages
           if ( selectedType == null )
           {
             if ( commandService.Current.SelectedDBTablesTypeFullName == null )
-              selectedType = new SelectedInfo( types[0] );
+              selectedType = new SelectedInfo( types[0], GetRendererType );
             else
-              selectedType = new SelectedInfo( types.FirstOrDefault( t => t.ClrType.FullName == commandService.Current.SelectedDBTablesTypeFullName ) ?? types[0] );
+              selectedType = new SelectedInfo( types.FirstOrDefault( t => t.ClrType.FullName == commandService.Current.SelectedDBTablesTypeFullName ) ?? types[0], GetRendererType );
           }
           else
           {
-            selectedType = new SelectedInfo( types.FirstOrDefault( t => t.ClrType.FullName == selectedType.Type.ClrType.FullName ) ?? types[0] );
+            selectedType = new SelectedInfo( types.FirstOrDefault( t => t.ClrType.FullName == selectedType.Type.ClrType.FullName ) ?? types[0], GetRendererType );
           }
           commandService.Current.SelectedDBTablesTypeFullName = selectedType.Type.ClrType.FullName;
         }
@@ -98,7 +107,7 @@ namespace Toast.Server.Components.Pages
       var sel = args.Value is string typeName ? types.First( t => t.ClrType.FullName == typeName ) : selectedType?.Type;
       if ( sel != null )
       {
-        selectedType = new SelectedInfo( sel );
+        selectedType = new SelectedInfo( sel, GetRendererType );
         commandService.Current.SelectedDBTablesTypeFullName = selectedType.Type.ClrType.FullName;
 
         StateHasChanged();
@@ -151,7 +160,9 @@ namespace Toast.Server.Components.Pages
     {
       if ( selectedType == null ) return;
 
+      selectedType.DeletingRow = null;
       selectedType.Deleting = true;
+      StateHasChanged();
       try
       {
         using var dbContext = await dbFactory.CreateDbContextAsync();

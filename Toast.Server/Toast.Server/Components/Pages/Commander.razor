@@ -1,7 +1,9 @@
 ﻿@page "/commander"
+@using Toast.Server.Components.Pages.Commands
 @using Toast.Server.Components.Shared.TabControl
 
 @using Microsoft.AspNetCore.Authorization
+@using Toast.Server.Data.Models
 
 @attribute [Authorize]
 
@@ -13,7 +15,7 @@
 
   <TabControl ActiveTabOnStart="@selectedComponent" OnActiveTabChanged="@OnActiveTabChanged">
     <Tab Name="@PageComponents.Test1" Title="DBTables">
-      <DBTables />
+      <DBTables GetRendererType="@GetRendererType" />
     </Tab>
     <Tab Name="@PageComponents.SendCommands" Hint="Выполнение команд на клиентах">
       <SendCommands />
@@ -39,6 +41,13 @@
     selectedComponent = ( PageComponents ) name;
 
     await Task.CompletedTask;
+  }
+
+  Type? GetRendererType( Microsoft.EntityFrameworkCore.Metadata.IEntityType type )
+  {
+    if ( type.ClrType == typeof( AgentResultDB ) )
+      return typeof( AgentResultDBList );
+    return null;
   }
 
 }

@@ -47,6 +47,6 @@ namespace Toast.Server.Api.Controllers
 
     public static CommandService.ClientInfo GetInfo( ControllerContext ControllerContext )
       =>
-        new ( ControllerContext.HttpContext.Connection.RemoteIpAddress?.ToString(), ControllerContext.HttpContext.Connection.RemotePort, ControllerContext.HttpContext.Connection.LocalPort, ControllerContext.HttpContext.Features.Humanize(), DateTime.UtcNow);
+        new ( ControllerContext.HttpContext.Connection.RemoteIpAddress?.ToString(), ControllerContext.HttpContext.Connection.RemotePort, ControllerContext.HttpContext.Connection.LocalPort, ControllerContext.HttpContext.User?.Identity?.Name, DateTime.UtcNow);
   }
 }

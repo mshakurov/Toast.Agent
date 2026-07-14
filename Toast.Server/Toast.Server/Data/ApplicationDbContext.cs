@@ -14,6 +14,8 @@ namespace Toast.Server.Data
 
     public DbSet<AgentResultDB> AgentResultDB { get; set; }
 
+    public DbSet<AgentSession> AgentSession { get; set; }
+    
     protected override void OnModelCreating( ModelBuilder builder )
     {
       base.OnModelCreating( builder );
@@ -40,9 +42,20 @@ namespace Toast.Server.Data
              .OwnsOne( c => c.Command );
 
       builder.Entity<AgentResultDB>().HasKey( c => c.Id );
+      builder.Entity<AgentResultDB>().OwnsMany( c => c.Results, builder =>
+        {
+          // ”казываем, что при удалении родител€ (AgentResultDB)
+          // дочерние записи CommandResult должны удал€тьс€ автоматически!
+          builder.WithOwner().HasForeignKey( "AgentResultDBId" );
 
-      builder.Entity<CommandResult>()
-        .HasKey( c => c.CommandId );
+          // EF Core сам создаст теневой ключ дл€ таблицы результатов
+          builder.HasKey( "Id" );
+        } );
+
+      //builder.Entity<CommandResult>()
+      //  .HasKey( c => c.CommandId );
+
+      builder.Entity<AgentSession>().HasKey( c => c.Id );
     }
   }
 }

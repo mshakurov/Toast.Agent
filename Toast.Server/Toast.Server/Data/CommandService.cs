@@ -42,14 +42,9 @@ namespace Toast.Server.Data
 
       using var dbContext = await dbFactory.CreateDbContextAsync();
 
-      var agentClient = await dbContext.AgentClient.FindAsync( [request.AgentId], token );
-      if ( agentClient == null )
-      {
-        agentClient = dbContext.AgentClient.Add( new Models.AgentClient() { ClientId = request.AgentId } ).Entity;
-        await dbContext.SaveChangesAsync( token );
-        ClientAddedEvent?.Invoke( this, request.AgentId );
+      var (agentClient, created) = await GetOrCreateClient( dbContext, request.AgentId, clientInfo, token );
+      if ( created )
         return new AgentResponse();
-      }
       else
       {
         agentClient.LastGet = clientInfo?.time ?? DateTime.UtcNow;
@@ -108,24 +103,14 @@ namespace Toast.Server.Data
 
       using var dbContext = await dbFactory.CreateDbContextAsync();
 
-      var agentClient = await dbContext.AgentClient.FindAsync( [agentResult.AgentId], token );
-      if ( agentClient == null )
-      {
-        agentClient = dbContext.AgentClient.Add( new Models.AgentClient() { ClientId = agentResult.AgentId } ).Entity;
-        await dbContext.SaveChangesAsync( token );
-        ClientAddedEvent?.Invoke( this, agentResult.AgentId );
-
-        Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.WriteLine( $"SetResults: Client added: {agentResult.AgentId}" );
-        Console.ResetColor();
-      }
+      var (agentClient, created) = await GetOrCreateClient( dbContext, agentResult.AgentId, clientInfo, token );
 
       agentClient.LastSet = clientInfo?.time ?? DateTime.UtcNow;
 
       // исключаем принятые результаты из ответа, если вдруг они перепутались между ответами
       var commandIdHashNew = agentResult.Results.Select( r => r.CommandId ).ToHashSet();
       int duplicateCount = 0;
-      foreach ( var r in await dbContext.AgentResultDB.Where( c => c.AgentId == agentResult.AgentId ).Include( c => c.Results ).SelectMany( c => c.Results )
+      foreach ( var r in await dbContext.AgentResultDB.Where( c => c.AgentId == agentResult.AgentId ).AsNoTracking().SelectMany( c => c.Results )
         .Where( r => !commandIdHashNew.Contains( r.CommandId ) )
         .ToListAsync() )
       {
@@ -137,7 +122,7 @@ namespace Toast.Server.Data
       {
         AgentId = agentResult.AgentId,
         Results = agentResult.Results.Where( r => commandIdHashNew.Contains( r.CommandId ) ).ToList(),
-        Received = DateTime.Now,
+        Received = DateTime.UtcNow,
       } );
 
       if ( commandIdHashNew.Count > 0 )
@@ -166,6 +151,29 @@ namespace Toast.Server.Data
       return await getter( dbContext );
     }
 
+    public async Task<(AgentClient client, bool created)> GetOrCreateClient( ApplicationDbContext dbContext, string agentId, ClientInfo? clientInfo = null, CancellationToken token = default )
+    {
+      var agentClient = await dbContext.AgentClient.FindAsync( [agentId], token );
+      bool created = agentClient == null;
+      if ( agentClient == null )
+        agentClient = dbContext.AgentClient.Add( new Models.AgentClient() { ClientId = agentId } ).Entity;
+
+      dbContext.AgentSession.Add( new AgentSession { ClientId = agentId, LocalPort = clientInfo?.localPort ?? 0, RemoteIPAddress = clientInfo?.remoteIpAddress ?? string.Empty, RemotePort = clientInfo?.remotePort ?? 0, Time = clientInfo?.time ?? DateTime.UtcNow, UserIdentityName = clientInfo?.userIdentityName } );
+
+      await dbContext.SaveChangesAsync( token );
+
+      if ( created )
+      {
+        ClientAddedEvent?.Invoke( this, agentId );
+
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine( $"SetResults: Client added: {agentId}" );
+        Console.ResetColor();
+      }
+
+      return (agentClient, created);
+    }
+
     public class State
     {
       public ShowMessageData ShowMessageData { get; set; } = new();
@@ -175,6 +183,6 @@ namespace Toast.Server.Data
       public string? SelectedDBTablesTypeFullName { get; set; }
     }
 
-    public record ClientInfo( string? remoteIpAddress, int remotePort, int localPort, string features, DateTime time );
+    public record ClientInfo( string? remoteIpAddress, int remotePort, int localPort, string? userIdentityName, DateTime time );
   }
 }

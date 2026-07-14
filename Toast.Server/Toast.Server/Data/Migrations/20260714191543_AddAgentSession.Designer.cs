@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Toast.Server.Data;
 
@@ -11,9 +12,11 @@ using Toast.Server.Data;
 namespace Toast.Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260714191543_AddAgentSession")]
+    partial class AddAgentSession
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -155,6 +158,28 @@ namespace Toast.Server.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Toast.Core.Commands.CommandResult", b =>
+                {
+                    b.Property<Guid>("CommandId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long?>("AgentResultDBId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Success")
+                        .HasColumnType("bit");
+
+                    b.HasKey("CommandId");
+
+                    b.HasIndex("AgentResultDBId");
+
+                    b.ToTable("CommandResult");
+                });
+
             modelBuilder.Entity("Toast.Server.Data.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -293,6 +318,10 @@ namespace Toast.Server.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Features")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("LocalPort")
                         .HasColumnType("int");
 
@@ -365,6 +394,13 @@ namespace Toast.Server.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Toast.Core.Commands.CommandResult", b =>
+                {
+                    b.HasOne("Toast.Server.Data.Models.AgentResultDB", null)
+                        .WithMany("Results")
+                        .HasForeignKey("AgentResultDBId");
+                });
+
             modelBuilder.Entity("Toast.Server.Data.Models.AgentCommandFor", b =>
                 {
                     b.HasOne("Toast.Server.Data.Models.AgentClient", "Client")
@@ -405,36 +441,6 @@ namespace Toast.Server.Migrations
 
             modelBuilder.Entity("Toast.Server.Data.Models.AgentResultDB", b =>
                 {
-                    b.OwnsMany("Toast.Core.Commands.CommandResult", "Results", b1 =>
-                        {
-                            b1.Property<int>("Id")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("int");
-
-                            SqlServerPropertyBuilderExtensions.UseIdentityColumn(b1.Property<int>("Id"));
-
-                            b1.Property<long>("AgentResultDBId")
-                                .HasColumnType("bigint");
-
-                            b1.Property<Guid>("CommandId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<string>("Message")
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.Property<bool>("Success")
-                                .HasColumnType("bit");
-
-                            b1.HasKey("Id");
-
-                            b1.HasIndex("AgentResultDBId");
-
-                            b1.ToTable("CommandResult");
-
-                            b1.WithOwner()
-                                .HasForeignKey("AgentResultDBId");
-                        });
-
                     b.Navigation("Results");
                 });
 #pragma warning restore 612, 618

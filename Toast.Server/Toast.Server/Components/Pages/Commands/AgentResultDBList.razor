@@ -1,0 +1,150 @@
+﻿@using Microsoft.EntityFrameworkCore
+@using Toast.Core.Commands
+@using Toast.Server.Data
+@inject CommandService commandService;
+@using Toast.Server.Components.Shared.MyTable;
+@using Toast.Server.Data.Models
+@inject IDbContextFactory<ApplicationDbContext> dbFactory
+
+
+<div class="form-control">
+  <h6>AgentResultDB List</h6>
+  <div class="mb-3">
+    <button class="btn btn-outline-info btn-sm" @onclick="@LoadData" title="Обновить" disabled="@deleting"><i class="bi bi-arrow-clockwise"></i></button>
+    <TableMy Items="results" Compact Border>
+      <TableHeader>
+        <th>Del</th>
+        <th>@(nameof( AgentResultDB.Id ))</th>
+        <th>@(nameof( AgentResultDB.AgentId ))</th>
+        <th>@(nameof( AgentResultDB.Received ))</th>
+        <th>@(nameof( AgentResultDB.Results ))</th>
+      </TableHeader>
+      <TableRow>
+        @{
+          var current = context;
+        }
+        <td>
+          <button class="btn btn-outline-danger btn-sm"
+                  @onclick="@(() => context.AskDelete = !context.AskDelete)"
+                  title="Удалить запись"
+                  disabled="@deleting">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+        <td style="max-width:30rem">@current.AgentResult.Id</td>
+        <td style="max-width:30rem">@current.AgentResult.AgentId</td>
+        <td style="max-width:30rem">@current.AgentResult.Received?.ToString( "s" )</td>
+        <td style="max-width:30rem"><a title="Просмотр всех результатов этого ответа">@current.ResultsInfo</a></td>
+      </TableRow>
+      <AfterRow>
+        @{
+          var current = context;
+        }
+        @if ( context.AskDelete )
+        {
+          <tr>
+            <td colspan="5">
+              <button class="btn btn-outline-danger btn-sm"
+                      @onclick="@(async () => await DeleteRow( current ))"
+                      title="Удалить запись?"
+                      disabled="@deleting">
+                <i class="bi bi-trash">Удалить запись?</i>
+              </button>
+            </td>
+          </tr>
+        }
+      </AfterRow>
+    </TableMy>
+  </div>
+
+  @if ( alert != null )
+  {
+    <textarea class="form-control text-bg-warning" rows="@alertRows" @bind="@alert"></textarea>
+  }
+
+</div>
+
+@code {
+
+  string filter = string.Empty;
+  AgentResultUI[] results = [];
+  bool deleting;
+  string? alert = null;
+  int alertRows = 3;
+
+  protected async override Task OnInitializedAsync()
+  {
+    await base.OnInitializedAsync();
+
+    await LoadData();
+  }
+
+  async Task LoadData()
+  {
+    results = [];
+    alert = null;
+    StateHasChanged();
+
+    try
+    {
+      using var dbContext = await dbFactory.CreateDbContextAsync();
+
+      results = ( await dbContext.AgentResultDB
+        .Include( ar => ar.Results )
+        .Where( ar => string.IsNullOrEmpty( filter )
+          || ar.AgentId.Contains( filter, StringComparison.InvariantCultureIgnoreCase )
+          || ar.Results.Any( r => r.Message == null || r.Message.Contains( filter, StringComparison.InvariantCultureIgnoreCase ) )
+        )
+        .OrderByDescending( ar => ar.Received )
+        .ToListAsync() ).Select( r => new AgentResultUI( r ) ).ToArray();
+    }
+    catch ( Exception ex )
+    {
+      alert = $"Ошибка чтения: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}";
+    }
+  }
+
+  async Task DeleteRow( AgentResultUI resultUI )
+  {
+    resultUI.AskDelete = false;
+    deleting = true;
+    alert = null;
+    StateHasChanged();
+    try
+    {
+      using var dbContext = await dbFactory.CreateDbContextAsync();
+      var resToDelete = await dbContext.AgentResultDB.FindAsync( resultUI.AgentResult.Id );
+      if ( resToDelete != null )
+      {
+        dbContext.AgentResultDB.Remove( resToDelete );
+        await dbContext.SaveChangesAsync();
+      }
+      await LoadData();
+    }
+    catch ( Exception ex )
+    {
+      alert = $"Ошибка удаления: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}";
+    }
+    finally
+    {
+      deleting = false;
+    }
+  }
+
+  class AgentResultUI
+  {
+    public readonly AgentResultDB AgentResult;
+    public readonly IReadOnlyList<CommandResult> Results;
+    public readonly string ResultsInfo;
+    public bool ResultsShown;
+    public bool AskDelete;
+    public AgentResultUI( AgentResultDB agentResultDB )
+    {
+      this.AgentResult = agentResultDB;
+      Results = agentResultDB.Results;
+      ResultsInfo = $"({Results.Count}) " + TrimLen( string.Join( ", ", Results.Select( r => $"[{( r.Success ? "!" : "#" )}, {TrimLen( r.Message, 30 )}]" ) ), 200 );
+    }
+
+    static string TrimLen( string? str, int len ) => str != null && str.Length > len ? $"{str[..len]}.." : ( str ?? string.Empty );
+  }
+}

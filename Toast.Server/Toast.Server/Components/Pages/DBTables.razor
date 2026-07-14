@@ -28,6 +28,13 @@
       </div>
       @if ( selectedType != null )
       {
+        @if ( selectedType.ComponentType != null )
+        {
+          <div class="dynamic-content-area mt-4 p-3 bg-light">
+            <!-- МАГИЯ БЛАЗОРА: Рендерит любой неизвестный компонент по его типу -->
+            <DynamicComponent Type="@selectedType.ComponentType" />
+          </div>
+        }
         <div class="mb-3">
           <button class="btn btn-outline-info btn-sm" @onclick="@LoadData" title="Обновить"><i class="bi bi-arrow-clockwise"></i></button>
           <TableMy TItem="object" Items="selectedType.Rows" Compact Border>
@@ -44,7 +51,7 @@
               }
               <td>
                 <button class="btn btn-outline-danger btn-sm"
-                        @onclick="@(async () => await DeleteRow( current ))"
+                        @onclick="@(() => selectedType.DeletingRow = selectedType.DeletingRow == null ? current : null )"
                         title="Удалить запись"
                         disabled="@selectedType.Deleting">
                   <i class="bi bi-trash"></i>
@@ -56,6 +63,24 @@
                 <td style="max-width:30rem">@text</td>
               }
             </TableRow>
+            <AfterRow>
+              @{
+                var current = context;
+              }
+              @if ( context == selectedType.DeletingRow )
+              {
+                <tr>
+                  <td colspan="5">
+                    <button class="btn btn-outline-danger btn-sm"
+                            @onclick="@(async () => await DeleteRow( current ))"
+                            title="Удалить запись?"
+                            disabled="@selectedType.Deleting">
+                      <i class="bi bi-trash">Удалить запись?</i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </AfterRow>
           </TableMy>
         </div>
         <div class="mb-3 form-check">
@@ -90,8 +115,9 @@
           References
           <TableMy TItem="Microsoft.EntityFrameworkCore.Metadata.IForeignKey" Items="selectedType.ForeignKeys" Compact Border>
             <TableHeader>
-              <th>"Name"</th>
+              <th>"Name From"</th>
               <th>"Keys"</th>
+              <th>"Name To"</th>
             </TableHeader>
             <TableRow>
               @{
@@ -99,6 +125,7 @@
               }
               <td>@current.DeclaringEntityType.Name</td>
               <td>@string.Join( ",", current.Properties.Select( p => $"{p.Name}" ) )</td>
+              <td>@current.PrincipalEntityType.Name</td>
             </TableRow>
           </TableMy>
         </div>
@@ -106,13 +133,15 @@
           References to this
           <TableMy TItem="Microsoft.EntityFrameworkCore.Metadata.IForeignKey" Items="selectedType.ReferencingForeignKeys" Compact Border>
             <TableHeader>
-              <th>"Name"</th>
-              <th>"Keys"</th>
+              <th>"Name From"</th>
+              <th>"Name To"</th>
+              <th>"To Keys"</th>
             </TableHeader>
             <TableRow>
               @{
                 var current = context;
               }
+              <td>@current.DeclaringEntityType.Name</td>
               <td>@current.PrincipalEntityType.Name</td>
               <td>@string.Join( ",", current.PrincipalKey.Properties.Select( p => $"{p.Name}" ) )</td>
             </TableRow>

@@ -1,6 +1,17 @@
-﻿@using Toast.Server.Data
+﻿@using Microsoft.EntityFrameworkCore
+@using Toast.Core.Commands
+@using Toast.Server.Data
 @inject CommandService commandService;
+@using Toast.Server.Components.Shared.MyTable;
+@using Toast.Server.Data.Models
+@inject IDbContextFactory<ApplicationDbContext> dbFactory
+
 
 @code {
+
+  protected async override Task OnInitializedAsync()
+  {
+    await base.OnInitializedAsync();
+  }
 
 }
