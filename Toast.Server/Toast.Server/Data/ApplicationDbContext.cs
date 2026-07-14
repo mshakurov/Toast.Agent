@@ -32,7 +32,7 @@ namespace Toast.Server.Data
           .HasOne( c => c.Client )                  // У команды есть один клиент
           .WithMany()                             // У клиента может быть много команд (коллекцию в AgentClient мы не создавали)
           .HasForeignKey( c => c.ClientId )    // Внешний ключ в таблице команд
-          .IsRequired( true )                      // Делает связь необязательной (так как тип string? допускает null)
+          .IsRequired( true )                      // Делает связь обязательной
           .OnDelete( DeleteBehavior.ClientNoAction );      // Что делать при удалении клиента (Cascade - удалит и его команды)
 
       // Говорим EF Core, что AgentCommand — это неотъемлемая часть AgentCommandFor
