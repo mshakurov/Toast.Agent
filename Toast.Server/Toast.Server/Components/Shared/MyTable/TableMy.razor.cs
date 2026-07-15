@@ -20,7 +20,7 @@ public class TableBase<TItem> : ComponentBase
   [Parameter]
   public int PagerSize { get; set; } = 6;
   [Parameter]
-  public Func<int, TItem[], Task<TItem[]>>? OverridePageItemsAsync { get; set; }
+  public OverridePageItemsDelegate? OverridePageItemsAsync { get; set; }
   [Parameter]
   public TItem? LocateToItem { get; set; }
   [Parameter]
@@ -49,9 +49,11 @@ public class TableBase<TItem> : ComponentBase
 
   public int PagesCount { get; private set; }
   public int CurrentPage { get; private set; } = 1;
-  public int PagerStartPage { get; private set; }
+  public int PagerStartPage { get; private set; } 
   public int PagerEndPage { get; private set; }
   public TItem[]? ItemList { get; private set; }
+
+  public delegate Task<TItem[]> OverridePageItemsDelegate( int pageNumber, TItem[] currentItems );
 
   private TItem[]? lastItems;
 

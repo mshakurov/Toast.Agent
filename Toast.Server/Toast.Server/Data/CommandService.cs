@@ -160,6 +160,9 @@ namespace Toast.Server.Data
 
       dbContext.AgentSession.Add( new AgentSession { ClientId = agentId, LocalPort = clientInfo?.localPort ?? 0, RemoteIPAddress = clientInfo?.remoteIpAddress ?? string.Empty, RemotePort = clientInfo?.remotePort ?? 0, Time = clientInfo?.time ?? DateTime.UtcNow, UserIdentityName = clientInfo?.userIdentityName } );
 
+      // удаляем старше 30 дней
+      dbContext.AgentSession.RemoveRange( ( await dbContext.AgentSession.Where( s => s.Time.AddDays( 30 ) < DateTime.UtcNow ).ToArrayAsync() ) );
+
       await dbContext.SaveChangesAsync( token );
 
       if ( created )

@@ -11,7 +11,8 @@
   <h6>AgentResultDB List</h6>
   <div class="mb-3">
     <button class="btn btn-outline-info btn-sm" @onclick="@LoadData" title="Обновить" disabled="@deleting"><i class="bi bi-arrow-clockwise"></i></button>
-    <TableMy Items="results" Compact Border>
+    <textarea @bind=@filter />
+    <TableMy Items="results" Compact Border OverridePageItemsAsync="@GetPageItems">
       <TableHeader>
         <th>Del</th>
         <th>@(nameof( AgentResultDB.Id ))</th>
@@ -71,6 +72,8 @@
   bool deleting;
   string? alert = null;
   int alertRows = 3;
+  // int pagerShowRows = 5;
+  // int pagerStartPageIndex = 0;
 
   protected async override Task OnInitializedAsync()
   {
@@ -89,19 +92,34 @@
     {
       using var dbContext = await dbFactory.CreateDbContextAsync();
 
-      results = ( await dbContext.AgentResultDB
-        .Include( ar => ar.Results )
-        .Where( ar => string.IsNullOrEmpty( filter )
-          || ar.AgentId.Contains( filter, StringComparison.InvariantCultureIgnoreCase )
-          || ar.Results.Any( r => r.Message == null || r.Message.Contains( filter, StringComparison.InvariantCultureIgnoreCase ) )
-        )
-        .OrderByDescending( ar => ar.Received )
-        .ToListAsync() ).Select( r => new AgentResultUI( r ) ).ToArray();
+      results = await LoadItemsForPageNumber( /* pagerStartPageIndex + 1 */ );
     }
     catch ( Exception ex )
     {
       alert = $"Ошибка чтения: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}";
     }
+  }
+
+  async Task<AgentResultUI[]> LoadItemsForPageNumber(/*  int pageNumber  */)
+  {
+    using var dbContext = await dbFactory.CreateDbContextAsync();
+
+    // pagerStartPageIndex = pageNumber - 1;
+    var lowerFilter = filter.ToLower();
+
+    IQueryable<AgentResultDB> query = dbContext.AgentResultDB;
+
+    if ( !string.IsNullOrEmpty( lowerFilter ) )
+      query = query.Include( ar => ar.Results )
+        .Where( ar => ar.AgentId.Contains( lowerFilter )
+          || ar.Results.Any( r => r.Message == null || r.Message.Contains( lowerFilter )
+          || ar.Received == null || EF.Functions.Like( ar.Received.Value.ToString(), $"%{lowerFilter}%" ) )
+        );
+    query = query.OrderByDescending( ar => ar.Received );
+    if ( string.IsNullOrEmpty( lowerFilter ) )
+      query = query.Include( ar => ar.Results );
+
+    return ( await query.ToListAsync() ).Select( r => new AgentResultUI( r ) ).ToArray();
   }
 
   async Task DeleteRow( AgentResultUI resultUI )
@@ -129,6 +147,12 @@
     {
       deleting = false;
     }
+  }
+
+  async Task<AgentResultUI[]> GetPageItems( int pageNumber, AgentResultUI[] currentItems )
+  {
+    //return await LoadItemsForPageNumber( pageNumber );
+    return await Task.FromResult( currentItems );
   }
 
   class AgentResultUI
