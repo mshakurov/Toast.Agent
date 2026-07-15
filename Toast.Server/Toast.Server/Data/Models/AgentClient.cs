@@ -8,6 +8,8 @@
     
     public DateTime? LastSet { get; set; }
 
+    public long LastAgentSessionId { get; set; }
+
     public override string ToString()
     {
       return $"{ClientId}";
