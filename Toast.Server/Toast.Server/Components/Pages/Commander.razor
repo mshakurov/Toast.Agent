@@ -47,6 +47,8 @@
   {
     if ( type.ClrType == typeof( AgentResultDB ) )
       return typeof( AgentResultDBList );
+    if ( type.ClrType == typeof( AgentCommandFor ) )
+      return typeof( AgentCommandForList );
     return null;
   }
 

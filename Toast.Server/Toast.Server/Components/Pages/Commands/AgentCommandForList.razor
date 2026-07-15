@@ -1,0 +1,173 @@
+﻿@using Microsoft.EntityFrameworkCore
+@using Toast.Core.Commands
+@using Toast.Server.Data
+@inject CommandService commandService;
+@using Toast.Server.Components.Shared.MyTable;
+@using Toast.Server.Data.Models
+@inject IDbContextFactory<ApplicationDbContext> dbFactory
+
+<div class="form-control">
+  <h6>AgentResultDB List</h6>
+  <div class="form-row">
+    <div class="input-group input-group-sm mb-2">
+      <div class="input-group-prepend">
+        <button class="btn btn-outline-info" @onclick="@RefreshClick" title="Обновить" disabled="@deleting"><i class="bi bi-arrow-clockwise"></i></button>
+      </div>
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="">Filter:</span>
+      </div>
+      <input type="text" class="form-control" id="filter" placeholder="filter" @bind-value=@filter @bind-value:event="oninput" />
+    </div>
+  </div>
+  <div class="form-row">
+    <TableMy Items="results" Compact Border>
+      <TableHeader>
+        <th>Del</th>
+        <th>@(nameof( AgentCommandFor.Id ))</th>
+        <th>@(nameof( AgentClient.ClientId ))</th>
+        <th>@(nameof( AgentCommandFor.Created ))</th>
+        <th>@(nameof( AgentCommandFor.Sent ))</th>
+        <th>@(nameof( AgentCommandForUI.CommandInfo ))</th>
+      </TableHeader>
+      <TableRow>
+        @{
+          var current = context;
+        }
+        <td>
+          <button class="btn btn-outline-danger btn-sm"
+                  @onclick="@(() => context.AskDelete = !context.AskDelete)"
+                  title="Удалить запись"
+                  disabled="@deleting">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+        <td style="max-width:30rem">@current.CommandFor.Id</td>
+        <td style="max-width:30rem">@current.CommandFor.ClientId</td>
+        <td style="max-width:30rem">@current.CreatedStr</td>
+        <td style="max-width:30rem">@current.SentStr</td>
+        <td style="max-width:30rem">@current.CommandInfo</td>
+      </TableRow>
+      <AfterRow>
+        @{
+          var current = context;
+        }
+        @if ( context.AskDelete )
+        {
+          <tr>
+            <td colspan="5">
+              <button class="btn btn-outline-danger btn-sm"
+                      @onclick="@(async () => await DeleteRow( current ))"
+                      title="Удалить запись?"
+                      disabled="@deleting">
+                <i class="bi bi-trash">Удалить запись?</i>
+              </button>
+            </td>
+          </tr>
+        }
+      </AfterRow>
+    </TableMy>
+  </div>
+
+  @if ( alert != null )
+  {
+    <textarea class="form-control text-bg-warning" rows="@alertRows" @bind="@alert"></textarea>
+  }
+
+</div>
+
+@code {
+
+  string filter = string.Empty;
+  AgentCommandForUI[] results = [];
+  bool deleting;
+  string? alert = null;
+  int alertRows = 3;
+
+  protected async override Task OnInitializedAsync()
+  {
+    await base.OnInitializedAsync();
+
+    await LoadData();
+  }
+
+  async Task LoadData( CancellationToken token = default )
+  {
+    results = [];
+    alert = null;
+    await InvokeAsync( StateHasChanged );
+
+    try
+    {
+      using var dbContext = await dbFactory.CreateDbContextAsync( token );
+
+      // pagerStartPageIndex = pageNumber - 1;
+
+      results = ( await dbContext.AgentCommandFor
+        .OrderByDescending( c => c.Sent ?? c.Created )
+        .Include( ar => ar.Command )
+        .ToListAsync( token ) )
+        .Select( r => new AgentCommandForUI( r ) )
+        .Where( r => string.IsNullOrEmpty( filter )
+          || r.CommandFor.Id.ToString().Contains( filter, StringComparison.InvariantCultureIgnoreCase )
+          || r.CommandInfo.Contains( filter, StringComparison.InvariantCultureIgnoreCase )
+          || r.CreatedStr.Contains( filter, StringComparison.InvariantCultureIgnoreCase )
+          || r.SentStr.Contains( filter, StringComparison.InvariantCultureIgnoreCase )
+        )
+        .ToArray();
+    }
+    catch ( Exception ex )
+    {
+      alert = $"Ошибка чтения: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}";
+    }
+  }
+
+  async Task RefreshClick()
+  {
+    await LoadData();
+  }
+
+  async Task DeleteRow( AgentCommandForUI commandUI )
+  {
+    commandUI.AskDelete = false;
+    deleting = true;
+    alert = null;
+    StateHasChanged();
+    try
+    {
+      using var dbContext = await dbFactory.CreateDbContextAsync();
+      var cmdToDelete = await dbContext.AgentCommandFor.FindAsync( commandUI.CommandFor.Id );
+      if ( cmdToDelete != null )
+      {
+        dbContext.AgentCommandFor.Remove( cmdToDelete );
+        await dbContext.SaveChangesAsync();
+      }
+      await LoadData();
+    }
+    catch ( Exception ex )
+    {
+      alert = $"Ошибка удаления: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}";
+    }
+    finally
+    {
+      deleting = false;
+    }
+  }
+
+
+  class AgentCommandForUI
+  {
+    public readonly AgentCommandFor CommandFor;
+    public readonly string CommandInfo;
+    public readonly string CreatedStr;
+    public readonly string SentStr;
+    public bool AskDelete;
+
+    public AgentCommandForUI( AgentCommandFor commandFor )
+    {
+      CommandFor = commandFor;
+      CommandInfo = CommandFor.Command?.ToString() ?? string.Empty;
+      CreatedStr = commandFor.Created.ToString( "s" );
+      SentStr = commandFor.Sent?.ToString( "s" ) ?? string.Empty;
+    }
+  }
+}
