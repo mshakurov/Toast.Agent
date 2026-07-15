@@ -6,18 +6,20 @@
 @using Toast.Server.Data.Models
 @inject IDbContextFactory<ApplicationDbContext> dbFactory
 
-
 <div class="form-control">
   <h6>AgentResultDB List</h6>
-  <div class="mb-3">
-    <div class="form-row">
-      <div class="form-group col-md-2">
-        <button class="btn btn-outline-info btn-sm" @onclick="@(async () => LoadData())" title="Обновить" disabled="@deleting"><i class="bi bi-arrow-clockwise"></i></button>
+  <div class="form-row">
+    <div class="input-group input-group-sm mb-2">
+      <div class="input-group-prepend">
+        <button class="btn btn-outline-info" @onclick="@RefreshClick" title="Обновить" disabled="@deleting"><i class="bi bi-arrow-clockwise"></i></button>
       </div>
-      <div class="form-group col-md-6">
-        <textarea @bind=@filter rows="1" @bind:event="oninput" @onchange="@ApplyFilter" />
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="">Filter:</span>
       </div>
+      <input type="text" class="form-control" id="filter" placeholder="filter" @bind-value=@filter @bind-value:event="oninput" />
     </div>
+  </div>
+  <div class="form-row">
     <TableMy Items="results" Compact Border OverridePageItemsAsync="@GetPageItems">
       <TableHeader>
         <th>Del</th>
@@ -40,7 +42,7 @@
         </td>
         <td style="max-width:30rem">@current.AgentResult.Id</td>
         <td style="max-width:30rem">@current.AgentResult.AgentId</td>
-        <td style="max-width:30rem">@current.AgentResult.Received?.ToString( "s" )</td>
+        <td style="max-width:30rem">@current.ReceivedStr</td>
         <td style="max-width:30rem"><a title="Просмотр всех результатов этого ответа">@current.ResultsInfo</a></td>
       </TableRow>
       <AfterRow>
@@ -73,14 +75,13 @@
 
 @code {
 
-  string filter = string.Empty;
-  CancellationTokenSource filterApplyCTS = new();
-  AgentResultUI[] results = [];
-  bool deleting;
-  string? alert = null;
-  int alertRows = 3;
+    string filter = string.Empty;
+    AgentResultUI[] results = [];
+    bool deleting;
+    string? alert = null;
+    int alertRows = 3;
   // int pagerShowRows = 5;
-  // int pagerStartPageIndex = 0;
+    // int pagerStartPageIndex = 0;
 
   protected async override Task OnInitializedAsync()
   {
@@ -93,7 +94,7 @@
   {
     results = [];
     alert = null;
-    StateHasChanged();
+    await InvokeAsync( StateHasChanged );
 
     try
     {
@@ -110,24 +111,27 @@
     using var dbContext = await dbFactory.CreateDbContextAsync( token );
 
     // pagerStartPageIndex = pageNumber - 1;
-    var lowerFilter = filter.ToLower();
 
-    IQueryable<AgentResultDB> query = dbContext.AgentResultDB;
-
-    if ( !string.IsNullOrEmpty( lowerFilter ) )
-      query = query.Include( ar => ar.Results )
-        .Where( ar => ar.AgentId.Contains( lowerFilter )
-          || ar.Results.Any( r => r.Message == null || r.Message.Contains( lowerFilter )
-          || ar.Received == null || EF.Functions.Like( ar.Received.Value.ToString(), $"%{lowerFilter}%" ) )
-        );
-    query = query.OrderByDescending( ar => ar.Received );
-    if ( string.IsNullOrEmpty( lowerFilter ) )
-      query = query.Include( ar => ar.Results );
-
-    return ( await query.ToListAsync( token ) )
+    return ( await dbContext.AgentResultDB
+      .OrderByDescending( ar => ar.Received )
+      .Include( ar => ar.Results )
+      .ToListAsync( token ) )
       .Select( r => new AgentResultUI( r ) )
-      .Where( r => string.IsNullOrEmpty( filter ) || r.ReceivedStr.Contains( filter, StringComparison.InvariantCultureIgnoreCase ) )
+      .Where( r => 
+        string.IsNullOrEmpty( filter ) 
+        || r.ReceivedStr.Contains( filter, StringComparison.InvariantCultureIgnoreCase ) 
+        || r.AgentResult.AgentId.Contains( filter, StringComparison.InvariantCultureIgnoreCase )
+        || r.Results.Any( r => r.Message == null 
+          || r.Message.Contains( filter, StringComparison.InvariantCultureIgnoreCase )
+          || r.CommandId.ToString().Contains( filter, StringComparison.InvariantCultureIgnoreCase )
+        )
+      )
       .ToArray();
+  }
+
+  async Task RefreshClick()
+  {
+    await LoadData();
   }
 
   async Task DeleteRow( AgentResultUI resultUI )
@@ -161,23 +165,6 @@
   {
     //return await LoadItemsForPageNumber( pageNumber );
     return await Task.FromResult( currentItems );
-  }
-
-  Task ApplyFilter()
-  {
-    filterApplyCTS.Cancel();
-    filterApplyCTS = new();
-    return Task.Run( async () =>
-    {
-      try
-      {
-        await Task.Delay( 3000, filterApplyCTS.Token );
-
-        await LoadData( filterApplyCTS.Token );
-      }
-      catch ( OperationCanceledException )
-      { }
-    }, filterApplyCTS.Token );
   }
 
   class AgentResultUI
