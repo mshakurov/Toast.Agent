@@ -14,7 +14,7 @@
         <button class="btn btn-outline-info" @onclick="@RefreshClick" title="Обновить" disabled="@deleting"><i class="bi bi-arrow-clockwise"></i></button>
       </div>
       <div class="input-group-prepend">
-        <span class="input-group-text" id="">Records: @results.Length.ToString( "#,0" )</span>
+        <span class="input-group-text" id="">Records: @commands.Length.ToString( "#,0" )</span>
       </div>
       <div class="input-group-prepend">
         <span class="input-group-text" id="">Filter:</span>
@@ -23,7 +23,7 @@
     </div>
   </div>
   <div class="form-row">
-    <TableMy Items="results" Compact Border>
+    <TableMy Items="commands" Compact Border>
       <TableHeader>
         <th>Del</th>
         <th>@(nameof( AgentCommandFor.Id ))</th>
@@ -31,6 +31,7 @@
         <th>@(nameof( AgentCommandFor.Created ))</th>
         <th>@(nameof( AgentCommandFor.Sent ))</th>
         <th>@(nameof( AgentCommandForUI.CommandInfo ))</th>
+        <th title="Поиск результата">Рез.</th>
       </TableHeader>
       <TableRow>
         @{
@@ -49,12 +50,20 @@
         <td style="max-width:30rem">@current.CreatedStr</td>
         <td style="max-width:30rem">@current.SentStr</td>
         <td style="max-width:30rem">@current.CommandInfo</td>
+        <td>
+          <button class="btn btn-outline-secondary btn-sm"
+                  @onclick="@(async () => await ChangeShowResults( current ))"
+                  title="Найти результат"
+                  disabled="@deleting">
+            <i class="bi bi-info"></i>
+          </button>
+        </td>
       </TableRow>
       <AfterRow>
         @{
           var current = context;
         }
-        @if ( context.AskDelete )
+        @if ( current.AskDelete )
         {
           <tr>
             <td colspan="5">
@@ -66,6 +75,33 @@
               </button>
             </td>
           </tr>
+        }
+        @if ( current.ShowResults )
+        {
+          @if ( current.Result == null )
+          {
+            <span>Поиск результата ...</span>
+          }
+          else
+          {
+            <tr>
+              <td colspan="6">
+
+                <div class="form-row">
+                  <div class="input-group input-group-sm mb-2">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text" id="">@(() => current.Result.Success ? "Успешно" : "# сбой #")</span>
+                    </div>
+                    <div class="input-group-prepend">
+                      <span class="input-group-text" id="">Сообщение:</span>
+                    </div>
+                    <textarea class="form-control" @bind="@current.Result.Message" rows="3" cols="300" readonly />
+                  </div>
+                </div>
+
+              </td>
+            </tr>
+          }
         }
       </AfterRow>
     </TableMy>
@@ -81,7 +117,7 @@
 @code {
 
   string filter = string.Empty;
-  AgentCommandForUI[] results = [];
+  AgentCommandForUI[] commands = [];
   bool deleting;
   string? alert = null;
   int alertRows = 3;
@@ -95,7 +131,7 @@
 
   async Task LoadData( CancellationToken token = default )
   {
-    results = [];
+    commands = [];
     alert = null;
     await InvokeAsync( StateHasChanged );
 
@@ -105,7 +141,7 @@
 
       // pagerStartPageIndex = pageNumber - 1;
 
-      results = ( await dbContext.AgentCommandFor
+      commands = ( await dbContext.AgentCommandFor
         .OrderByDescending( c => c.Sent ?? c.Created )
         .Include( ar => ar.Command )
         .ToListAsync( token ) )
@@ -156,6 +192,22 @@
     }
   }
 
+  async Task ChangeShowResults( AgentCommandForUI commandUI )
+  {
+    if ( commandUI.ShowResults )
+    {
+      commandUI.ShowResults = false;
+      return;
+    }
+    commandUI.ShowResults = true;
+    if ( commandUI.Result == null )
+      await Task.Run( async () =>
+      {
+        commandUI.Result = await commandService.GetCommandResult( commandUI.CommandFor.ClientId, commandUI.CommandFor.Command.Id );
+
+        await InvokeAsync( StateHasChanged );
+      } );
+  }
 
   class AgentCommandForUI
   {
@@ -164,6 +216,8 @@
     public readonly string CreatedStr;
     public readonly string SentStr;
     public bool AskDelete;
+    public bool ShowResults;
+    public CommandResult? Result;
 
     public AgentCommandForUI( AgentCommandFor commandFor )
     {

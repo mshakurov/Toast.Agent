@@ -183,6 +183,13 @@ namespace Toast.Server.Data
       return (agentClient, created);
     }
 
+    public async Task<CommandResult?> GetCommandResult( string clientId, Guid commandId, CancellationToken token = default )
+    {
+      using var dbContext = await dbFactory.CreateDbContextAsync(token);
+
+      return await dbContext.AgentResultDB.Where( c => c.AgentId == clientId ).AsNoTracking().Include( r => r.Results ).SelectMany( r => r.Results ).FirstAsync( r => r.CommandId == commandId, token );
+    }
+
     public class State
     {
       public ShowMessageData ShowMessageData { get; set; } = new();
