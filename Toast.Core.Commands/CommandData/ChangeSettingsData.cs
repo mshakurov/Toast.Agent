@@ -2,7 +2,6 @@
 
 public class ChangeSettingsData : CommandDataBase
 {
-  public string AgentId { get; set; } = string.Empty;
   public ushort? PollingInterval { get; set; }
   public RemoteServer[]? AddServers { get; set; }
   public RemoteServer[]? RemoveServers { get; set; }
