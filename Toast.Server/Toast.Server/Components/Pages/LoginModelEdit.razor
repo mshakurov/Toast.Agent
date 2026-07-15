@@ -1,0 +1,40 @@
+﻿@using Toast.Core.Commands
+
+<div class="input-group mb-3">
+  <div class="input-group mb-3">
+    <div class="input-group-prepend">
+      <span class="input-group-text" id="Email">Email</span>
+    </div>
+    <input type="text" class="form-control" placeholder="Email" aria-label="Email" aria-describedby="Email" @bind-value="@Email">
+  </div>
+  <div class="input-group mb-3">
+    <div class="input-group-prepend">
+      <span class="input-group-text" id="Password">Password</span>
+    </div>
+    @if ( passwordVisible )
+    {
+      <input type="text" class="form-control" placeholder="Password" aria-label="Password" aria-describedby="Password" @bind-value="@Password">
+    }
+    else
+    {
+      <input type="password" class="form-control" placeholder="Password" aria-label="Password" aria-describedby="Password" @bind-value="@Password">
+    }
+    <div class="input-group-append">
+      <span class="input-group-text"><i class="bi-eye" title="Показать пароль" @onclick=@(() => passwordVisible = !passwordVisible)></i></span>
+    </div>
+  </div>
+</div>
+
+
+
+@code {
+
+  [Parameter]
+  public string Email { get; set; } = string.Empty;
+
+  [Parameter]
+  public string Password { get; set; } = string.Empty;
+
+  bool passwordVisible;
+
+}

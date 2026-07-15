@@ -2,22 +2,48 @@
 @using Toast.Server.Api
 @using Toast.Server.Components.Pages.Commands
 @using Toast.Server.Data
+@using Toast.Server.Components.Shared.TabControl;
 @inject CommandService commandService;
 
-<h4>SendCommands</h4>
+<h4>Send Commands</h4>
 
-<SelectClients @bind-SelectedClients="@commandService.Current.SelectedCommandClients" />
+<div class="form-control">
 
-<ShowMessageCommand @bind-Data="@commandService.Current.ShowMessageData">
-  <button type="button" class="btn btn-primary btn-sm" disabled="@sending" onclick="@(async () => await SendCommand( commandService.Current.ShowMessageData ))">Send</button>
-</ShowMessageCommand>
+  <div class="form-row">
+    <SelectClients @bind-SelectedClients="@commandService.Current.SelectedCommandClients" />
+  </div>
 
-@if ( alert != null )
-{
-  <textarea class="form-control text-bg-warning" rows="@alertRows" @bind="@alert"></textarea>
-}
+  <div class="form-row">
+    <TabControl ActiveTabOnStart="@commandService.Current.SendCommand_SelectedTab" OnActiveTabChanged="@(tab => commandService.Current.SendCommand_SelectedTab = tab)">
+      <Tab Name="@PageComponents.ShowMessage" Title="ShowMessage">
+        <ShowMessageCommand @bind-Data="@commandService.Current.ShowMessageData">
+          <button type="button" class="btn btn-primary btn-sm" disabled="@sending" onclick="@(async () => await SendCommand( commandService.Current.ShowMessageData ))">Send</button>
+        </ShowMessageCommand>
+      </Tab>
+      <Tab Name="@PageComponents.ChangeSettings" Title="ChangeSettings">
+        <ChangeSettingsCommand @bind-Data="@commandService.Current.ChangeSettingsData">
+          <button type="button" class="btn btn-primary btn-sm" disabled="@sending" onclick="@(async () => await SendCommand( commandService.Current.ChangeSettingsData ))">Send</button>
+        </ChangeSettingsCommand>
+      </Tab>
+    </TabControl>
+  </div>
+
+  @if ( alert != null )
+  {
+    <div class="form-row">
+      <textarea class="form-control text-bg-warning" rows="@alertRows" @bind="@alert"></textarea>
+    </div>
+  }
+
+</div>
 
 @code {
+
+  enum PageComponents
+  {
+    ShowMessage,
+    ChangeSettings,
+  }
 
   string? alert = null;
   int alertRows = 3;
@@ -27,6 +53,8 @@
   {
     await base.OnInitializedAsync();
 
+    if ( commandService.Current.SendCommand_SelectedTab == null )
+      commandService.Current.SendCommand_SelectedTab = PageComponents.ShowMessage;
   }
 
   async Task SendCommand( object? data )

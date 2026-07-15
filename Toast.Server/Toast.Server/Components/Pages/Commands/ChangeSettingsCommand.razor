@@ -1,0 +1,137 @@
+﻿@using Toast.Core.Commands
+@using Toast.Core.Commands.CommandData
+@using Toast.Server.Api
+
+<h6>Command ChangeSettings</h6>
+
+<div class="input-group mb-3">
+  <div class="input-group-prepend">
+    <span class="input-group-text" id="PollingInterval">Polling Interval, seconds:</span>
+  </div>
+  <input type="number" class="form-control" placeholder="PollingInterval" aria-label="PollingInterval" aria-describedby="PollingInterval" @bind-value="@_data.PollingInterval" @bind-value:event="oninput" @onchange="NotifyParent" @bind-value:after="NotifyParent">
+</div>
+<div class="input-group mb-3">
+  <div class="input-group mb-3">
+    Добавляемые сервера (<span>@_data.AddServers?.Length</span>):
+  </div>
+  <div class="input-group mb-3">
+    <button type="button" class="btn btn-outline-success btn-sm" onclick="@AddToAddServer">+</button>
+    @foreach ( var _srv in _data.AddServers ?? [] )
+    {
+      var srvAdd = _srv;
+
+      <RemoteServerEdit @bind-Data="@srvAdd" @bind-Data:after="NotifyParent">
+        <button type="button" class="btn btn-outline-danger btn-sm" onclick="@(async () => await RemoveAddServer( srvAdd ))" title="Удалить сервер">Del</button>
+      </RemoteServerEdit>
+    }
+  </div>
+</div>
+<div class="input-group mb-3">
+  <div class="input-group mb-3">
+    Удаляемые сервера (<span>@_data.AddServers?.Length</span>):
+  </div>
+  <div class="input-group mb-3">
+    (можно указать '*' в HostURL для удаления всех серверов на клиенте при получении команды)
+  </div>
+  <div class="input-group mb-3">
+    <button type="button" class="btn btn-outline-success btn-sm" onclick="@AddToDelServer">+</button>
+    @foreach ( var _srv in _data.RemoveServers ?? [] )
+    {
+      var srvDel = _srv;
+
+      <RemoteServerEdit @bind-Data="@srvDel" @bind-Data:after="NotifyParent">
+        <button type="button" class="btn btn-outline-danger btn-sm" onclick="@(async () => await RemoveDelServer( srvDel ))" title="Удалить сервер">Del</button>
+      </RemoteServerEdit>
+    }
+  </div>
+</div>
+@if ( ChildContent != null )
+{
+  <hr />
+  @ChildContent
+}
+
+<textarea class="form-control" rows="5" cols="500" @bind="@log"></textarea>
+
+
+@code {
+
+  [Parameter]
+  public ChangeSettingsData? Data { get; set; }
+
+  // Шаблон имени строго: ИмяПараметра + Changed
+  [Parameter]
+  public EventCallback<ChangeSettingsData> DataChanged { get; set; }
+
+  [Parameter]
+  public RenderFragment? ChildContent { get; set; }
+
+  ChangeSettingsData _data = new();
+
+  string log = string.Empty;
+
+  protected override void OnParametersSet()
+  {
+    base.OnParametersSet();
+
+    log += "\n" + $"> P: {Data}, _data: ({_data})";
+
+    _data = Data.Clone() ?? new();
+
+    _data.AddServers ??= [];
+    _data.RemoveServers ??= [];
+    if ( _data.PollingInterval < 5 )
+      _data.PollingInterval = 5;
+
+    log += "\n" + $"< P: _data: ({_data})";
+  }
+
+  private async Task NotifyParent()
+  {
+    log += "\n" + $"> N: {Data}, _data: ({_data})";
+
+    // Передаем сам объект. Так как свойства Name/Phone уже изменились
+    // через @bind, родитель сразу получит свежие данные.
+    await DataChanged.InvokeAsync( _data );
+
+    log += "\n" + $"< N: {Data}, _data: ({_data})";
+  }
+
+  async Task RemoveAddServer( RemoteServer srv )
+  {
+    _data.AddServers = ( _data.AddServers ?? [] ).Except( [srv], RemoteServer.Comparer ).ToArray();
+
+    await InvokeAsync( StateHasChanged );
+
+    await NotifyParent();
+  }
+
+  async Task RemoveDelServer( RemoteServer srv )
+  {
+    _data.RemoveServers = ( _data.RemoveServers ?? [] ).Except( [srv], RemoteServer.Comparer ).ToArray();
+
+    await InvokeAsync( StateHasChanged );
+
+    await NotifyParent();
+  }
+
+  async Task AddToAddServer( )
+  {
+    _data.AddServers = ( _data.AddServers ?? [] ).Append( new RemoteServer() { HostURL = Guid.NewGuid().ToString() } ).ToArray();
+
+    await InvokeAsync( StateHasChanged );
+
+    await NotifyParent();
+  }
+
+  async Task AddToDelServer(  )
+  {
+    _data.AddServers = ( _data.AddServers ?? [] ).Append( new RemoteServer() { HostURL = Guid.NewGuid().ToString() } ).ToArray();
+
+    await InvokeAsync( StateHasChanged );
+
+    await NotifyParent();
+  }
+
+  //
+}

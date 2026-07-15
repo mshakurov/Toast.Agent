@@ -192,7 +192,11 @@ namespace Toast.Server.Data
 
     public class State
     {
+      public object? SendCommand_SelectedTab { get; set; }
+
       public ShowMessageData ShowMessageData { get; set; } = new();
+
+      public ChangeSettingsData ChangeSettingsData { get; set; } = new() { AddServers = [], RemoveServers = [], PollingInterval = 5 };
 
       public List<string> SelectedCommandClients { get; set; } = [];
 

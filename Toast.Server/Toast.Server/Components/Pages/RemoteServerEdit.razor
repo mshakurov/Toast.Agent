@@ -1,0 +1,71 @@
+﻿@using Toast.Core.Commands
+@using Toast.Server.Api
+
+<div class="input-group mb-3">
+  <div class="input-group-prepend">
+    <span class="input-group-text" id="HostURL">HostURL</span>
+  </div>
+  <input type="text" class="form-control" placeholder="HostURL" aria-label="HostURL" aria-describedby="HostURL" @bind-value="@_data.HostURL" @bind-value:event="oninput" @onchange="NotifyParent" @bind-value:after="NotifyParent">
+</div>
+
+<div class="input-group mb-3">
+  <div class="input-group-prepend">
+    <span class="input-group-text" id="Port">Port</span>
+  </div>
+  <input type="number" class="form-control" placeholder="Port" aria-label="Port" aria-describedby="Port" @bind-value="@_data.Port" @bind-value:event="oninput" @onchange="NotifyParent" @bind-value:after="NotifyParent">
+</div>
+
+<div class="input-group mb-3">
+  <div class="input-group-prepend">
+    <span class="input-group-text" id="APIBasePath">APIBasePath</span>
+  </div>
+  <input type="text" class="form-control" placeholder="APIBasePath" aria-label="APIBasePath" aria-describedby="APIBasePath" @bind-value="@_data.APIBasePath" @bind-value:event="oninput" @onchange="NotifyParent" @bind-value:after="NotifyParent">
+</div>
+
+
+@if ( ChildContent != null )
+{
+  <hr />
+  @ChildContent
+}
+
+
+@code {
+
+  [Parameter]
+  public RemoteServer? Data { get; set; }
+
+
+  // Шаблон имени строго: ИмяПараметра + Changed
+  [Parameter]
+  public EventCallback<RemoteServer> DataChanged { get; set; }
+
+  [Parameter]
+  public RenderFragment? ChildContent { get; set; }
+
+  RemoteServer _data = new();
+
+  string Email { get; set; } = string.Empty;
+  string Password { get; set; } = string.Empty;
+
+  protected override void OnParametersSet()
+  {
+    base.OnParametersSet();
+
+    // log += "\n" + $"> P: {Data}, _data: ({_data})";
+    _data = Data.Clone() ?? new();
+    // log += "\n" + $"< P: _data: ({_data})";
+  }
+
+  private async Task NotifyParent()
+  {
+    // log += "\n" + $"> N: {Data}, _data: ({_data})";
+
+    // Передаем сам объект. Так как свойства Name/Phone уже изменились
+    // через @bind, родитель сразу получит свежие данные.
+    await DataChanged.InvokeAsync( _data );
+
+    // log += "\n" + $"< N: {Data}, _data: ({_data})";
+  }
+
+}

@@ -14,13 +14,13 @@
 <AuthorizeView>
 
   <TabControl ActiveTabOnStart="@selectedComponent" OnActiveTabChanged="@OnActiveTabChanged">
-    <Tab Name="@PageComponents.Test1" Title="DBTables">
+    <Tab Name="@PageComponents.DBTables" Title="DBTables">
       <DBTables GetRendererType="@GetRendererType" />
     </Tab>
     <Tab Name="@PageComponents.SendCommands" Hint="Выполнение команд на клиентах">
       <SendCommands />
     </Tab>
-    @* <Tab Name="@PageComponents.Test2">
+@*     <Tab Name="@PageComponents.ChangeSettings">
       Test 2
     </Tab> *@
   </TabControl>
@@ -31,8 +31,8 @@
   enum PageComponents
   {
     SendCommands,
-    Test1,
-    Test2
+    DBTables,
+    // ChangeSettings
   }
   PageComponents selectedComponent = PageComponents.SendCommands;
 
