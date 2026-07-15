@@ -14,7 +14,7 @@ namespace Toast.Server.Data
     public readonly State Current = new State();
     private readonly IDbContextFactory<ApplicationDbContext> dbFactory;
 
-    public event EventHandler<string>? ClientAddedEvent;
+    public event EventHandler<string>? ClientChangedEvent;
 
     public CommandService( IDbContextFactory<ApplicationDbContext> dbFactory )
     {
@@ -47,23 +47,20 @@ namespace Toast.Server.Data
         return new AgentResponse();
       else
       {
-        agentClient.LastGet = clientInfo?.time ?? DateTime.UtcNow;
+        var now = DateTime.UtcNow;
+        agentClient.LastGet = clientInfo?.time ?? now;
         var commandsFor = await dbContext.AgentCommandFor.Include( c => c.Client ).Where( ac => ac.Client.ClientId == request.AgentId && ac.Sent == null ).Include( c => c.Command ).ToListAsync( token );
-        if ( commandsFor.Count > 0 )
+        commandsFor.ForEach( c => c.Sent = now );
+        try
         {
-          var now = DateTime.UtcNow;
-          commandsFor.ForEach( c => c.Sent = now );
-          try
-          {
-            await dbContext.SaveChangesAsync( token );
-          }
-          catch ( Exception exSave )
-          {
-            Console.BackgroundColor = ConsoleColor.Red;
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine( $"### Ошибка сохранения отправленных AgentCommandFor после отправки команд: {exSave}" );
-            Console.ResetColor();
-          }
+          await dbContext.SaveChangesAsync( token );
+        }
+        catch ( Exception exSave )
+        {
+          Console.BackgroundColor = ConsoleColor.Red;
+          Console.ForegroundColor = ConsoleColor.Yellow;
+          Console.WriteLine( $"### Ошибка сохранения отправленных AgentCommandFor после отправки команд: {exSave}" );
+          Console.ResetColor();
         }
         return new AgentResponse { Commands = [.. commandsFor.Select( cf => cf.Command )] };
       }
@@ -71,6 +68,9 @@ namespace Toast.Server.Data
 
     public async Task<AgentClient[]> GetAllAgentClients( CancellationToken token = default )
       => await InContext( async dbContext => await dbContext.AgentClient.ToArrayAsync( token ) );
+
+    public async Task<IReadOnlyList<AgentSession>> GetSessions( long[] sessionIds, CancellationToken token = default )
+      => await InContext( async dbContext => await dbContext.AgentSession.Where( s => sessionIds.Contains( s.Id ) ).ToListAsync() );
 
     public async Task<List<AgentCommandFor>> EnqueueCommandAsync( List<string> selectedCommandClients, CommandDataBase commandData, CancellationToken? token = default )
     {
@@ -158,21 +158,27 @@ namespace Toast.Server.Data
       if ( agentClient == null )
         agentClient = dbContext.AgentClient.Add( new Models.AgentClient() { ClientId = agentId } ).Entity;
 
-      dbContext.AgentSession.Add( new AgentSession { ClientId = agentId, LocalPort = clientInfo?.localPort ?? 0, RemoteIPAddress = clientInfo?.remoteIpAddress ?? string.Empty, RemotePort = clientInfo?.remotePort ?? 0, Time = clientInfo?.time ?? DateTime.UtcNow, UserIdentityName = clientInfo?.userIdentityName } );
+      var lastSession = new AgentSession { ClientId = agentId, LocalPort = clientInfo?.localPort ?? 0, RemoteIPAddress = clientInfo?.remoteIpAddress ?? string.Empty, RemotePort = clientInfo?.remotePort ?? 0, Time = clientInfo?.time ?? DateTime.UtcNow, UserIdentityName = clientInfo?.userIdentityName };
+
+      dbContext.AgentSession.Add( lastSession );
 
       // удаляем старше 30 дней
       dbContext.AgentSession.RemoveRange( ( await dbContext.AgentSession.Where( s => s.Time.AddDays( 30 ) < DateTime.UtcNow ).ToArrayAsync() ) );
 
       await dbContext.SaveChangesAsync( token );
 
+      agentClient.LastAgentSessionId = lastSession.Id;
+
+      await dbContext.SaveChangesAsync( token );
+
       if ( created )
       {
-        ClientAddedEvent?.Invoke( this, agentId );
-
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine( $"SetResults: Client added: {agentId}" );
         Console.ResetColor();
       }
+
+      ClientChangedEvent?.Invoke( this, agentId );
 
       return (agentClient, created);
     }

@@ -14,6 +14,9 @@
         <button class="btn btn-outline-info" @onclick="@RefreshClick" title="Обновить" disabled="@deleting"><i class="bi bi-arrow-clockwise"></i></button>
       </div>
       <div class="input-group-prepend">
+        <span class="input-group-text" id="">Records: @results.Length.ToString( "#,0" )</span>
+      </div>
+      <div class="input-group-prepend">
         <span class="input-group-text" id="">Filter:</span>
       </div>
       <input type="text" class="form-control" id="filter" placeholder="filter" @bind-value=@filter @bind-value:event="oninput" />

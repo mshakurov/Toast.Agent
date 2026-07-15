@@ -24,7 +24,7 @@
       </div>
       <div class="mb-3 form-check">
         <input type="checkbox" class="form-check-input" id="waitIfShow" @bind="@_data.WaitIfShow" @bind:event="oninput" @onchange="NotifyParent" @bind:after="NotifyParent">
-        <label class="form-check-label" for="waitIfShow" @onclick=@(async () => { @_data.WaitIfShow = !@_data.WaitIfShow; await NotifyParent(); })>@nameof( ShowMessageData.WaitIfShow )</label>
+        <label class="form-check-label" for="waitIfShow" @onclick=@WaitIfShowChanged>@nameof( ShowMessageData.WaitIfShow )</label>
       </div>
       @if (ChildContent != null)
       {
@@ -71,6 +71,12 @@
     await DataChanged.InvokeAsync( _data );
 
     // log += "\n" + $"< N: {Data}, _data: ({_data})";
+  }
+
+  async Task WaitIfShowChanged()
+  {
+    _data.WaitIfShow = !_data.WaitIfShow; 
+    await NotifyParent();
   }
 
 }

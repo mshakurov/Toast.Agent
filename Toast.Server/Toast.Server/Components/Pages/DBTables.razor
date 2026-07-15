@@ -36,7 +36,16 @@
           </div>
         }
         <div class="mb-3">
-          <button class="btn btn-outline-info btn-sm" @onclick="@LoadData" title="Обновить"><i class="bi bi-arrow-clockwise"></i></button>
+
+          <div class="input-group input-group-sm mb-2">
+            <div class="input-group-prepend">
+              <button class="btn btn-outline-info" @onclick="@LoadData" title="Обновить"><i class="bi bi-arrow-clockwise"></i></button>
+            </div>
+            <div class="input-group-prepend">
+              <span class="input-group-text" id="">Records: @selectedType.Rows.Length.ToString("#,0")</span>
+            </div>
+          </div>
+
           <TableMy TItem="object" Items="selectedType.Rows" Compact Border>
             <TableHeader>
               <th>Del</th>
@@ -51,7 +60,7 @@
               }
               <td>
                 <button class="btn btn-outline-danger btn-sm"
-                        @onclick="@(() => selectedType.DeletingRow = selectedType.DeletingRow == null ? current : null )"
+                        @onclick="@(() => selectedType.DeletingRow = selectedType.DeletingRow == null ? current : null)"
                         title="Удалить запись"
                         disabled="@selectedType.Deleting">
                   <i class="bi bi-trash"></i>

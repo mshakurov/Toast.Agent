@@ -9,12 +9,18 @@
 }
 else
 {
+  <div>Clients: @agentClients.Length.ToString("#,0")</div>
   <Toast.Server.Components.Shared.MyTable.TableMy TItem="AgentClientUI" Compact Items="agentClients" Border>
     <TableHeader>
       <th>Выбран</th>
       <th>@nameof( AgentClient.ClientId )</th>
       <th>@nameof( AgentClient.LastGet )</th>
       <th>@nameof( AgentClient.LastSet )</th>
+      <th>:</th>
+      <th>@nameof( AgentSession.RemoteIPAddress )</th>
+      <th>@nameof( AgentSession.RemotePort )</th>
+      <th>@nameof( AgentSession.LocalPort )</th>
+      <th>User</th>
     </TableHeader>
     <TableRow>
       @{
@@ -25,6 +31,11 @@ else
       <td @onclick="@(async args => await OnSelectChanged( @agentUI, null ))">@agentUI.Client.ClientId</td>
       <td>@agentUI.Client.LastGet</td>
       <td>@agentUI.Client.LastSet</td>
+      <td>:</td>
+      <td>@agentUI.LastSession?.RemoteIPAddress</td>
+      <td>@agentUI.LastSession?.RemotePort</td>
+      <td>@agentUI.LastSession?.LocalPort</td>
+      <td>@agentUI.LastSession?.UserIdentityName</td>
     </TableRow>
   </Toast.Server.Components.Shared.MyTable.TableMy>
 }
@@ -46,12 +57,14 @@ else
   class AgentClientUI
   {
     public readonly AgentClient Client;
+    public readonly AgentSession? LastSession;
     public readonly string LastGetStr;
     public readonly string LastSetStr;
 
-    public AgentClientUI( AgentClient client )
+    public AgentClientUI( AgentClient client, AgentSession? session )
     {
       Client = client;
+      LastSession = session;
       LastGetStr = client.LastGet.ToString( "s" );
       LastSetStr = client.LastSet?.ToString( "s" ) ?? string.Empty;
     }
@@ -63,7 +76,7 @@ else
   {
     await base.OnInitializedAsync();
 
-    commandService.ClientAddedEvent += OnClientAdded;
+    commandService.ClientChangedEvent += OnClientChanged;
   }
 
   protected override async Task OnParametersSetAsync()
@@ -78,7 +91,10 @@ else
     loadClientsError = null;
     try
     {
-      agentClients = ( await commandService.GetAllAgentClients() ).Select( c => new AgentClientUI( c ) { Selected = SelectedClients.Contains( c.ClientId ) } ).OrderBy( c => c.Selected ? 1 : 2 ).ThenByDescending( c => c.Client.LastSet ?? c.Client.LastGet ).ToArray();
+      var allClients = await commandService.GetAllAgentClients();
+      var sessionDict = ( await commandService.GetSessions( allClients.Select( c => c.LastAgentSessionId ).ToArray() ) ).ToDictionary( s => s.Id );
+
+      agentClients = allClients.Select( c => new AgentClientUI( c, sessionDict.TryGetValue(c.LastAgentSessionId, out var session) ? session : null ) { Selected = SelectedClients.Contains( c.ClientId ) } ).OrderBy( c => c.Selected ? 1 : 2 ).ThenByDescending( c => c.Client.LastSet ?? c.Client.LastGet ).ToArray();
     }
     catch ( Exception ex )
     {
@@ -100,7 +116,7 @@ else
       await SelectedClientsChanged.InvokeAsync( SelectedClients = SelectedClients.Except( [clientUI.Client.ClientId] ).ToList() );
   }
 
-  void OnClientAdded( object? sender, string clientId )
+  void OnClientChanged( object? sender, string clientId )
   {
     _ = Task.Run( () => RefreshClients().ContinueWith( _ => InvokeAsync( StateHasChanged ) ).Wait() );
   }
