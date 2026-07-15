@@ -13,6 +13,8 @@ else
     <TableHeader>
       <th>Выбран</th>
       <th>@nameof( AgentClient.ClientId )</th>
+      <th>@nameof( AgentClient.LastGet )</th>
+      <th>@nameof( AgentClient.LastSet )</th>
     </TableHeader>
     <TableRow>
       @{
@@ -21,6 +23,8 @@ else
       }
       <td><input type="checkbox" class="form-check" checked="@selected" @onchange="@(async args => await OnSelectChanged( @agentUI, args ))"></td>
       <td @onclick="@(async args => await OnSelectChanged( @agentUI, null ))">@agentUI.Client.ClientId</td>
+      <td>@agentUI.Client.LastGet</td>
+      <td>@agentUI.Client.LastSet</td>
     </TableRow>
   </Toast.Server.Components.Shared.MyTable.TableMy>
 }
@@ -39,9 +43,18 @@ else
   AgentClientUI[]? agentClients = null;
   string? loadClientsError = null;
 
-  class AgentClientUI( AgentClient client )
+  class AgentClientUI
   {
-    public AgentClient Client => client;
+    public readonly AgentClient Client;
+    public readonly string LastGetStr;
+    public readonly string LastSetStr;
+
+    public AgentClientUI( AgentClient client )
+    {
+      Client = client;
+      LastGetStr = client.LastGet.ToString( "s" );
+      LastSetStr = client.LastSet?.ToString( "s" ) ?? string.Empty;
+    }
 
     public bool Selected { get; set; }
   }
@@ -65,7 +78,7 @@ else
     loadClientsError = null;
     try
     {
-      agentClients = ( await commandService.GetAllAgentClients() ).Select( c => new AgentClientUI( c ) { Selected = SelectedClients.Contains( c.ClientId ) } ).ToArray();
+      agentClients = ( await commandService.GetAllAgentClients() ).Select( c => new AgentClientUI( c ) { Selected = SelectedClients.Contains( c.ClientId ) } ).OrderBy( c => c.Selected ? 1 : 2 ).ThenByDescending( c => c.Client.LastSet ?? c.Client.LastGet ).ToArray();
     }
     catch ( Exception ex )
     {
@@ -79,10 +92,12 @@ else
   {
     clientUI.Selected = args != null && args.Value is bool _bool ? _bool : !clientUI.Selected;
 
+    agentClients = agentClients?.OrderBy( c => c.Selected ? 1 : 2 ).ThenByDescending( c => c.Client.LastSet ?? c.Client.LastGet ).ToArray();
+
     if ( clientUI.Selected )
-      await SelectedClientsChanged.InvokeAsync( SelectedClients.Union( [clientUI.Client.ClientId] ).ToList() );
+      await SelectedClientsChanged.InvokeAsync( SelectedClients = SelectedClients.Union( [clientUI.Client.ClientId] ).ToList() );
     else
-      await SelectedClientsChanged.InvokeAsync( SelectedClients.Except( [clientUI.Client.ClientId] ).ToList() );
+      await SelectedClientsChanged.InvokeAsync( SelectedClients = SelectedClients.Except( [clientUI.Client.ClientId] ).ToList() );
   }
 
   void OnClientAdded( object? sender, string clientId )
