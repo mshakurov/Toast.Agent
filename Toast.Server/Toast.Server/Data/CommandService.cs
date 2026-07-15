@@ -86,7 +86,7 @@ namespace Toast.Server.Data
           {
             Id = Guid.NewGuid(),
             Type = CommandTypes.ShowMessage,
-            JsonParameters = JsonSerializer.Serialize( commandData )
+            JsonParameters = JsonSerializer.Serialize( commandData, commandData.GetType() )
           }
         } ).Entity );
 
