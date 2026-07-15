@@ -27,8 +27,8 @@ namespace Toast.Core.Commands
         return new CommandResult() { CommandId = command.Id, Success = false, Message = data.error };
       }
 
-      if ( data.data.PollingInterval.HasValue && data.data.PollingInterval >= 5 && data.data.PollingInterval != context.Settings.PollingInterval )
-        context.Settings.PollingInterval = data.data.PollingInterval.Value;
+      if ( data.data.PollingInterval.HasValue && data.data.PollingInterval != context.Settings.PollingInterval )
+        context.Settings.PollingInterval = Math.Max( (ushort)5, data.data.PollingInterval.Value );
 
       if ( data.data.RemoveServers != null && data.data.RemoveServers.Any() )
         if ( data.data.RemoveServers.Any( s => s.HostURL == "*" ) )
