@@ -3,9 +3,12 @@
 @using Toast.Server.Components.Shared.TabControl
 
 @using Microsoft.AspNetCore.Authorization
+@using Toast.Server.Data
 @using Toast.Server.Data.Models
 
 @attribute [Authorize]
+
+@inject CommandService commandService;
 
 <PageTitle>Commander</PageTitle>
 
@@ -13,7 +16,7 @@
 
 <AuthorizeView>
 
-  <TabControl ActiveTabOnStart="@selectedComponent" OnActiveTabChanged="@OnActiveTabChanged">
+  <TabControl ActiveTabOnStart="@commandService.Current.Commander_SelectedTab" OnActiveTabChanged="@OnActiveTabChanged">
     <Tab Name="@PageComponents.DBTables" Title="DBTables">
       <DBTables GetRendererType="@GetRendererType" />
     </Tab>
@@ -34,11 +37,18 @@
     DBTables,
     // ChangeSettings
   }
-  PageComponents selectedComponent = PageComponents.SendCommands;
+
+  protected async override Task OnInitializedAsync()
+  {
+    await base.OnInitializedAsync();
+
+    if ( commandService.Current.Commander_SelectedTab == null )
+      commandService.Current.Commander_SelectedTab = PageComponents.SendCommands;
+  }
 
   async Task OnActiveTabChanged(object name)
   {
-    selectedComponent = ( PageComponents ) name;
+    commandService.Current.Commander_SelectedTab = ( PageComponents ) name;
 
     await Task.CompletedTask;
   }

@@ -15,7 +15,9 @@ namespace Toast.Server.Data
     public DbSet<AgentResultDB> AgentResultDB { get; set; }
 
     public DbSet<AgentSession> AgentSession { get; set; }
-    
+
+    public DbSet<RemoteServerDB> PredefinedServers { get; set; }
+
     protected override void OnModelCreating( ModelBuilder builder )
     {
       base.OnModelCreating( builder );
@@ -56,6 +58,8 @@ namespace Toast.Server.Data
       //  .HasKey( c => c.CommandId );
 
       builder.Entity<AgentSession>().HasKey( c => c.Id );
+
+      builder.Entity<RemoteServerDB>().HasKey( c => c.Id );
     }
   }
 }

@@ -1,27 +1,65 @@
 ﻿@using Toast.Core.Commands
 @using Toast.Server.Api
+@using Toast.Server.Data
+@inject CommandService commandService;
 
-<div class="input-group mb-3">
+<div class="input-group input-group-sm mb-3">
   <div class="input-group-prepend">
     <span class="input-group-text" id="HostURL">HostURL</span>
   </div>
   <input type="text" class="form-control" placeholder="HostURL" aria-label="HostURL" aria-describedby="HostURL" @bind-value="@_data.HostURL" @bind-value:event="oninput" @onchange="NotifyParent" @bind-value:after="NotifyParent">
 </div>
 
-<div class="input-group mb-3">
+<div class="input-group input-group-sm mb-3">
   <div class="input-group-prepend">
     <span class="input-group-text" id="Port">Port</span>
   </div>
   <input type="number" class="form-control" placeholder="Port" aria-label="Port" aria-describedby="Port" @bind-value="@_data.Port" @bind-value:event="oninput" @onchange="NotifyParent" @bind-value:after="NotifyParent">
 </div>
 
-<div class="input-group mb-3">
+<div class="input-group input-group-sm mb-3">
   <div class="input-group-prepend">
     <span class="input-group-text" id="APIBasePath">APIBasePath</span>
   </div>
   <input type="text" class="form-control" placeholder="APIBasePath" aria-label="APIBasePath" aria-describedby="APIBasePath" @bind-value="@_data.APIBasePath" @bind-value:event="oninput" @onchange="NotifyParent" @bind-value:after="NotifyParent">
 </div>
 
+@* 
+<div class="input-group input-group-sm mb-3">
+  <LoginModelEdit Data="_data.LoginModel" DataChanged="@(async lm => await LoginModelChanged(lm))" />
+</div> *@
+
+
+<div class="input-group mb-3">
+  <!-- Фейковый блок для обмана автозаполнения браузера -->
+  <div style="display: none;">
+    <input type="text" name="fake_email_remembered" autocomplete="username" />
+    <input type="password" name="fake_password_remembered" autocomplete="password" />
+  </div>
+
+  <div class="input-group mb-3">
+    <div class="input-group-prepend">
+      <span class="input-group-text" id="tratatatrulala" name="tratatatrulala">Email</span>
+    </div>
+    <input type="text" class="form-control" aria-describedby="tratatatrulala" id="@idOfEmail" name="@idOfEmail" @bind-value="@LM_Email" @bind-value:event="oninput" @onchange="NotifyParent" @bind-value:after="NotifyParent" autocomplete="off">
+  </div>
+  <div class="input-group mb-3">
+    <div class="input-group-prepend">
+      <span class="input-group-text" id="trulalatratata" name="trulalatratata">Password</span>
+    </div>
+    @if ( passwordVisible )
+    {
+      <input type="text" class="form-control" aria-describedby="trulalatratata" id="@idOfPassword" name="@idOfPassword" @bind-value="@LM_Password" @bind-value:event="oninput" @onchange="NotifyParent" @bind-value:after="NotifyParent" autocomplete="off">
+    }
+    else
+    {
+      <input type="@PasswordFieldType" class="form-control" aria-describedby="trulalatratata" id="@idOfPassword" name="@idOfPassword" @bind-value="@LM_Password" @bind-value:event="oninput" @onchange="NotifyParent" @bind-value:after="NotifyParent" autocomplete="off" @onfocus="EnablePasswordMode">
+    }
+    <div class="input-group-append">
+      <span class="input-group-text"><i class="bi-eye" title="Показать пароль" @onclick=@(() => passwordVisible = !passwordVisible)></i></span>
+    </div>
+  </div>
+</div>
 
 @if ( ChildContent != null )
 {
@@ -35,7 +73,6 @@
   [Parameter]
   public RemoteServer? Data { get; set; }
 
-
   // Шаблон имени строго: ИмяПараметра + Changed
   [Parameter]
   public EventCallback<RemoteServer> DataChanged { get; set; }
@@ -43,29 +80,84 @@
   [Parameter]
   public RenderFragment? ChildContent { get; set; }
 
+  [Parameter]
+  public Action<string>? Log { get; set; }
+
   RemoteServer _data = new();
 
-  string Email { get; set; } = string.Empty;
-  string Password { get; set; } = string.Empty;
+  string LM_Email = string.Empty;
+  string LM_Password = string.Empty;
+  string idOfEmail = Guid.NewGuid().ToString();
+  string idOfPassword = Guid.NewGuid().ToString();
+  bool passwordVisible = false;
+  string PasswordFieldType { get; set; } = "text";
+
+  protected async override Task OnInitializedAsync()
+  {
+    await base.OnInitializedAsync();
+
+    idOfEmail = Guid.NewGuid().ToString();
+    idOfPassword = Guid.NewGuid().ToString();
+  }
 
   protected override void OnParametersSet()
   {
     base.OnParametersSet();
 
-    // log += "\n" + $"> P: {Data}, _data: ({_data})";
+    var log = "\n" + $">>> (RS) OnParametersSet:";
+    log += "\n" + $" - Data    : {Data};";
+    log += "\n" + $" - _data   : {_data};";
+    log += "\n" + $" - Svc.Data: {commandService.Current.ChangeSettingsData};";
+    log += "\n" + $">>> (RS)";
+    Log?.Invoke( log );
+
     _data = Data.Clone() ?? new();
-    // log += "\n" + $"< P: _data: ({_data})";
+
+    LM_Email = _data.LoginModel?.Email ?? string.Empty;
+    LM_Password = _data.LoginModel?.Password ?? string.Empty;
+
+    EnablePasswordMode();
+
+    log = "\n" + $"<<< (RS) OnParametersSet:";
+    log += "\n" + $" - _data   : {_data};";
+    log += "\n" + $"<<< (RS)";
+    Log?.Invoke( log );
   }
 
   private async Task NotifyParent()
   {
-    // log += "\n" + $"> N: {Data}, _data: ({_data})";
+    var log = "\n" + $">>>> (RS) NotifyParent:";
+    log += "\n" + $" - Data    : {Data};";
+    log += "\n" + $" - _data   : {_data};";
+    log += "\n" + $" - Svc.Data: {commandService.Current.ChangeSettingsData};";
+    log += "\n" + $">>> (RS)";
+    Log?.Invoke( log );
+
+    _data.LoginModel = new( LM_Email, LM_Password );
 
     // Передаем сам объект. Так как свойства Name/Phone уже изменились
     // через @bind, родитель сразу получит свежие данные.
     await DataChanged.InvokeAsync( _data );
 
-    // log += "\n" + $"< N: {Data}, _data: ({_data})";
+    log = "\n" + $"<<< (RS) NotifyParent:";
+    log += "\n" + $" - Data    : {Data};";
+    log += "\n" + $" - _data   : {_data};";
+    log += "\n" + $" - Svc.Data: {commandService.Current.ChangeSettingsData};";
+    log += "\n" + $"<<< (RS)";
+    Log?.Invoke( log );
+  }
+
+  // async Task LoginModelChanged(LoginModel lm)
+  // {
+  //   _data.LoginModel = lm;
+
+  //   await DataChanged.InvokeAsync( _data );
+  // }
+
+  private void EnablePasswordMode()
+  {
+    // Как только пользователь кликнул на поле — превращаем его в скрытый пароль
+    PasswordFieldType = "password";
   }
 
 }

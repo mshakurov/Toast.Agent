@@ -1,0 +1,110 @@
+﻿@using Toast.Core.Commands
+@using Toast.Core.Commands.CommandData
+@using Toast.Server.Api
+@using Toast.Server.Data
+@inject CommandService commandService;
+
+<div class="card">
+  <div class="card-header">
+    <div>
+      <span>@Header (@Data.Length): </span>
+      <button type="button" class="btn btn-outline-success btn-sm" @onclick="@AddNew" title="Добавить сервер">+</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm right" @onclick="@(() => listShown = !listShown)" title="Скрыть/показать сервера">
+        @if ( listShown )
+        {
+          <i class="bi-arrow-bar-up"></i>
+        }
+        else
+        {
+          <i class="bi-arrow-bar-down"></i>
+        }
+      </button>
+    </div>
+  </div>
+  @* @if ( listShown )
+  { *@
+  @{
+    var listHidden = !listShown;
+  }
+  <div class="card-body" hidden="@listHidden">
+    <div class="card-text">
+      @for ( int _idx = 0; _idx < Data.Length; _idx++ )
+      {
+        var idx = _idx;
+        var srv = Data[idx];
+
+        <div class="card">
+          <RemoteServerEdit Data="@srv" DataChanged=@(async ( srvNew ) => await OnRemoteServerChange( idx, srvNew, srv, true ))>
+            <button type="button" class="btn btn-outline-danger btn-sm" onclick="@(async () => await RemoveServer( idx ))" title="Удалить сервер">Del</button>
+          </RemoteServerEdit>
+        </div>
+      }
+    </div>
+  </div>
+  @* } *@
+  @if ( ChildContent != null )
+  {
+    <div class="input-group input-group-sm mb-3">
+      @ChildContent
+    </div>
+  }
+</div>
+
+@code {
+
+  [Parameter]
+  public string Header { get; set; } = string.Empty;
+
+  [Parameter]
+  public RemoteServer[] Data { get; set; } = [];
+
+  // Шаблон имени строго: ИмяПараметра + Changed
+  [Parameter]
+  public EventCallback<RemoteServer[]> DataChanged { get; set; }
+
+  [Parameter]
+  public RenderFragment? ChildContent { get; set; }
+
+  RemoteServer[] _data = [];
+
+  bool listShown = true;
+
+  protected override void OnParametersSet()
+  {
+    base.OnParametersSet();
+
+    _data = Data;
+  }
+
+  private async Task NotifyParent()
+  {
+    // Передаем сам объект. Так как свойства Name/Phone уже изменились
+    // через @bind, родитель сразу получит свежие данные.
+    await DataChanged.InvokeAsync( _data );
+  }
+
+  async Task AddNew()
+  {
+    _data = _data.Append( new RemoteServer() ).ToArray();
+
+    await InvokeAsync( StateHasChanged );
+
+    await NotifyParent();
+  }
+
+  async Task RemoveServer( int idx )
+  {
+    _data = _data.Select( ( s, i ) => (s, i) ).Where( ss => ss.i != idx ).Select( ss => ss.s ).ToArray();
+
+    await InvokeAsync( StateHasChanged );
+
+    await NotifyParent();
+  }
+
+  async Task OnRemoteServerChange( int idx, RemoteServer srvNew, RemoteServer srv, bool add )
+  {
+    _data[idx] = srvNew;
+
+    await NotifyParent();
+  }
+}

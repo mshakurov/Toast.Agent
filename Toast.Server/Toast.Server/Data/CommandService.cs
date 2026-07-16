@@ -192,6 +192,8 @@ namespace Toast.Server.Data
 
     public class State
     {
+      public object? Commander_SelectedTab { get; set; }
+
       public object? SendCommand_SelectedTab { get; set; }
 
       public ShowMessageData ShowMessageData { get; set; } = new();

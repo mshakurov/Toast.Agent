@@ -1,23 +1,30 @@
 ﻿@using Toast.Core.Commands
+@using Toast.Server.Api
 
 <div class="input-group mb-3">
+  <!-- Фейковый блок для обмана автозаполнения браузера -->
+  <div style="display: none;">
+    <input type="text" name="fake_email_remembered" autocomplete="username" />
+    <input type="password" name="fake_password_remembered" autocomplete="current-password" />
+  </div>
+
   <div class="input-group mb-3">
     <div class="input-group-prepend">
-      <span class="input-group-text" id="Email">Email</span>
+      <span class="input-group-text" id="idOfEmail" name="idOfEmail">E-m=ail</span>
     </div>
-    <input type="text" class="form-control" placeholder="Email" aria-label="Email" aria-describedby="Email" @bind-value="@Email">
+    <input type="text" class="form-control" placeholder="Email" aria-label="Email" aria-describedby="idOfEmail" id="@idOfEmail" name="@idOfEmail" @bind-value="@E_ma_i_l123" @bind-value:event="oninput" @onchange="NotifyParent" @bind-value:after="NotifyParent" autocomplete="new-username">
   </div>
   <div class="input-group mb-3">
     <div class="input-group-prepend">
-      <span class="input-group-text" id="Password">Password</span>
+      <span class="input-group-text" id="idOfPassword" name="idOfPassword">Pa-s-sw-ord</span>
     </div>
     @if ( passwordVisible )
     {
-      <input type="text" class="form-control" placeholder="Password" aria-label="Password" aria-describedby="Password" @bind-value="@Password">
+      <input type="text" class="form-control" placeholder="Password" aria-label="Password" aria-describedby="idOfPassword" id="@idOfPassword" name="@idOfPassword" @bind-value="@P_as_s_wo_rd123" @bind-value:event="oninput" @onchange="NotifyParent" @bind-value:after="NotifyParent" autocomplete="new-password">
     }
     else
     {
-      <input type="password" class="form-control" placeholder="Password" aria-label="Password" aria-describedby="Password" @bind-value="@Password">
+      <input type="password" class="form-control" placeholder="Password" aria-label="Password" aria-describedby="idOfPassword" id="@idOfPassword" name="@idOfPassword" @bind-value="@P_as_s_wo_rd123" @bind-value:event="oninput" @onchange="NotifyParent" @bind-value:after="NotifyParent" autocomplete="new-password">
     }
     <div class="input-group-append">
       <span class="input-group-text"><i class="bi-eye" title="Показать пароль" @onclick=@(() => passwordVisible = !passwordVisible)></i></span>
@@ -30,11 +37,42 @@
 @code {
 
   [Parameter]
-  public string Email { get; set; } = string.Empty;
+  public LoginModel? Data { get; set; }
 
+  // Шаблон имени строго: ИмяПараметра + Changed
   [Parameter]
-  public string Password { get; set; } = string.Empty;
+  public EventCallback<LoginModel> DataChanged { get; set; }
 
-  bool passwordVisible;
+  string E_ma_i_l123 = string.Empty;
+  string P_as_s_wo_rd123 = string.Empty;
+  string idOfEmail = Guid.NewGuid().ToString();
+  string idOfPassword = Guid.NewGuid().ToString();
+
+  bool passwordVisible = false;
+
+  LoginModel _data = new( string.Empty, string.Empty );
+
+  protected async override Task OnInitializedAsync()
+  {
+    await base.OnInitializedAsync();
+
+    idOfEmail = Guid.NewGuid().ToString();
+    idOfPassword = Guid.NewGuid().ToString();
+  }
+
+  protected override void OnParametersSet()
+  {
+    base.OnParametersSet();
+
+    _data = Data.Clone() ?? new( string.Empty, string.Empty );
+  }
+
+  private async Task NotifyParent()
+  {
+    // Передаем сам объект. Так как свойства Name/Phone уже изменились
+    // через @bind, родитель сразу получит свежие данные.
+    _data = new( E_ma_i_l123, P_as_s_wo_rd123 );
+    await DataChanged.InvokeAsync( _data );
+  }
 
 }

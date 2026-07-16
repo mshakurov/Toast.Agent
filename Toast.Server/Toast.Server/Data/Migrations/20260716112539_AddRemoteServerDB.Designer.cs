@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Toast.Server.Data;
 
@@ -11,9 +12,11 @@ using Toast.Server.Data;
 namespace Toast.Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260716112539_AddRemoteServerDB")]
+    partial class AddRemoteServerDB
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -236,7 +239,7 @@ namespace Toast.Server.Migrations
 
                     b.HasKey("ClientId");
 
-                    b.ToTable("AgentClient", (string)null);
+                    b.ToTable("AgentClient");
                 });
 
             modelBuilder.Entity("Toast.Server.Data.Models.AgentCommandFor", b =>
@@ -261,7 +264,7 @@ namespace Toast.Server.Migrations
 
                     b.HasIndex("ClientId");
 
-                    b.ToTable("AgentCommandFor", (string)null);
+                    b.ToTable("AgentCommandFor");
                 });
 
             modelBuilder.Entity("Toast.Server.Data.Models.AgentResultDB", b =>
@@ -281,7 +284,7 @@ namespace Toast.Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AgentResultDB", (string)null);
+                    b.ToTable("AgentResultDB");
                 });
 
             modelBuilder.Entity("Toast.Server.Data.Models.AgentSession", b =>
@@ -314,7 +317,7 @@ namespace Toast.Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AgentSession", (string)null);
+                    b.ToTable("AgentSession");
                 });
 
             modelBuilder.Entity("Toast.Server.Data.Models.RemoteServerDB", b =>
@@ -331,7 +334,7 @@ namespace Toast.Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PredefinedServers", (string)null);
+                    b.ToTable("PredefinedServers");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -411,7 +414,7 @@ namespace Toast.Server.Migrations
 
                             b1.HasKey("AgentCommandForId");
 
-                            b1.ToTable("AgentCommandFor", (string)null);
+                            b1.ToTable("AgentCommandFor");
 
                             b1.WithOwner()
                                 .HasForeignKey("AgentCommandForId");
@@ -449,7 +452,7 @@ namespace Toast.Server.Migrations
 
                             b1.HasIndex("AgentResultDBId");
 
-                            b1.ToTable("CommandResult", (string)null);
+                            b1.ToTable("CommandResult");
 
                             b1.WithOwner()
                                 .HasForeignKey("AgentResultDBId");

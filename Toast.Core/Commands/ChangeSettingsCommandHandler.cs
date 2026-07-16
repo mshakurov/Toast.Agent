@@ -32,7 +32,7 @@ namespace Toast.Core.Commands
 
       if ( data.data.RemoveServers != null && data.data.RemoveServers.Any() )
         if ( data.data.RemoveServers.Any( s => s.HostURL == "*" ) )
-          context.Settings.Servers = data.data.AddServers ?? [];
+          context.Settings.Servers = [];
         else
           context.Settings.Servers = context.Settings.Servers.Except( data.data.RemoveServers, RemoteServer.Comparer ).ToArray();
       if ( data.data.AddServers != null && data.data.AddServers.Any() )

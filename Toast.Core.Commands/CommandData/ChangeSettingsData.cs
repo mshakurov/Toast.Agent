@@ -8,6 +8,7 @@ public class ChangeSettingsData : CommandDataBase
 
   public override string ToString()
   {
-    return $"Interval: {PollingInterval}, Srv+: {AddServers?.Length}, Srv-: {RemoveServers?.Length}";
+    string inf( RemoteServer[]? srvs ) => $"({srvs?.Length}) {string.Join( ", ", ( srvs ?? [] ).Select( s => $"[{s.GetKey()}]" ) )}";
+    return $"Interval: {PollingInterval}, Srv+: {inf(AddServers)}, Srv-: {inf( RemoveServers )}";
   }
 }
