@@ -25,9 +25,12 @@ public class HostSettings : IHostSettings, ICloneable
 
   public string HostUID => DeviceInfoProviderService.DeviceUniqueIdentifier;
 
+  public async Task<string> GetDeviceInfoAsync( CancellationToken token = default )
+      => await DeviceHardwareProviderService.GetDeviceHumanReadableFullInfo( token );
+
   public object Clone() => CloneTyped();
 
-  public HostSettings CloneTyped() => JsonSerializer.Deserialize<HostSettings>(JsonSerializer.Serialize( this ) ) ?? new HostSettings();
+  public HostSettings CloneTyped() => JsonSerializer.Deserialize<HostSettings>( JsonSerializer.Serialize( this ) ) ?? new HostSettings();
 
   /// <summary>
   /// <inheritdoc cref="IHostSettings.Update"/>
@@ -38,5 +41,5 @@ public class HostSettings : IHostSettings, ICloneable
     return Task.Run( () => CompositionRoot.GetSingletonSettingsService().SaveSettings( clone ) );
   }
 
-  public RemoteServer[] GetValidServers() => Servers.Where( s => !string.IsNullOrWhiteSpace( s.HostURL ) && s.LoginModel != null && !string.IsNullOrWhiteSpace( s.LoginModel.Email ) ).ToArray();
+  public RemoteServer[] GetValidServers() => Servers.Where( s => s.IsValid() ).ToArray();
 }

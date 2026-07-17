@@ -18,8 +18,6 @@ namespace Toast.Core.Commands
 
     public int Port { get; set; } = 7101;
 
-    public string BaseUrl => $"{HostURL}:{Port}";
-
     public string APIBasePath { get; set; } = RemoteServer.C_APIBasePath;
 
     public LoginModel? LoginModel { get; set; }
@@ -27,10 +25,15 @@ namespace Toast.Core.Commands
     public string GetKey() => $"[{HostURL}:{Port}/{APIBasePath}]@[{LoginModel?.Email}:{LoginModel?.Password}]";
 
     public override string ToString() => GetKey();
-       
+
+
+    [JsonIgnore]
+    public string BaseUrl => $"{HostURL}:{Port}";
 
     [JsonIgnore]
     public AuthResponse? LastAuthToken { get; set; }
+
+    public bool IsValid() => !string.IsNullOrWhiteSpace( HostURL ) && LoginModel != null && !string.IsNullOrWhiteSpace( LoginModel.Email );
 
     public class RemoteServerComparer: IComparer<RemoteServer>, IEqualityComparer<RemoteServer>
     {
@@ -38,7 +41,7 @@ namespace Toast.Core.Commands
 
       public int Compare( RemoteServer? x, RemoteServer? y )
       {
-        return string.Compare( x?.GetKey(), y?.GetKey(), StringComparison.Ordinal );
+        return string.Compare( x?.GetKey(), y?.GetKey(), StringComparison.InvariantCultureIgnoreCase );
       }
 
       public bool Equals( RemoteServer? x, RemoteServer? y )

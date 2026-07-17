@@ -36,5 +36,6 @@ namespace Toast.Tests
       Assert.Equal( sm.Duration, sm2.Duration );
       Assert.Equal( sm.WaitIfShow, sm2.WaitIfShow );
     }
+
   }
 }

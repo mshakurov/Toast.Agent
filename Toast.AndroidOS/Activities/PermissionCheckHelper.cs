@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Toast.AndroidOS.Bootstrap;
+using Toast.Core.Utilities;
 using Toast.Core.Interfaces;
 
 namespace Toast.AndroidOS.Activities
@@ -185,7 +186,7 @@ namespace Toast.AndroidOS.Activities
         }
         catch ( Exception ex )
         {
-          _logger?.Error( this, $"# Error periodic check permissions: {ex.Message}|{ex.InnerException?.Message}" );
+          _logger?.Error( this, $"# Error periodic check permissions: {ex.GetFullMessage()}" );
         }
       }
       _checkTask = null;

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,16 +15,21 @@ public static class ActivitySignalBridge
   // Внутренний класс, представляющий состояние одного ожидания
   private class WaiterState : IDisposable
   {
-    private readonly Action<(bool timedOut, object? result)> _callback;
+    private readonly Action<(bool timedOut, string log)> _callback;
     private readonly Timer _timer;
     private int _isCompleted = 0; // Флаг атомарности для предотвращения двойного вызова
+    private StringBuilder _log;
+    private Stopwatch _swStarted;
 
     public Guid Id { get; }
 
-    public WaiterState( Guid id, TimeSpan timeout, Action<(bool timedOut, object? result)> callback )
+    public WaiterState( Guid id, TimeSpan timeout, Action<(bool timedOut, string log)> callback )
     {
       Id = id;
       _callback = callback;
+      _log = new();
+      _swStarted = Stopwatch.StartNew();
+      LogLine( "Created" );
 
       // Таймер сработает ровно один раз через заданный TimeSpan
       _timer = new Timer( OnTimeout, null, timeout, Timeout.InfiniteTimeSpan );
@@ -32,12 +38,19 @@ public static class ActivitySignalBridge
     // Вызывается автоматически при срабатывании таймера
     private void OnTimeout( object? state )
     {
-      Trigger( timedOut: true, result: null );
+      Trigger( timedOut: true, message: "OnTimeout" );
+    }
+
+    public void LogLine( string? message )
+    {
+      _log.AppendLine( $"{_swStarted.Elapsed:c} | {message}" );
     }
 
     // Метод для безопасного вызова колбэка
-    public void Trigger( bool timedOut, object? result )
+    public void Trigger( bool timedOut, string? message )
     {
+      LogLine( $"Trigger: {message}" );
+
       // Interlocked гарантирует, что колбэк выполнится только 1 раз (кто первый успел — таймер или Activity)
       if ( Interlocked.Exchange( ref _isCompleted, 1 ) == 0 )
       {
@@ -45,7 +58,7 @@ public static class ActivitySignalBridge
         _waiters.TryRemove( Id, out _ );
 
         // Вызываем делегат сервиса
-        _callback.Invoke( (timedOut, result) );
+        _callback.Invoke( (timedOut, _log.ToString()) );
 
         // Освобождаем ресурсы таймера
         Dispose();
@@ -64,7 +77,7 @@ public static class ActivitySignalBridge
   /// <summary>
   /// Регистрация нового ожидателя.
   /// </summary>
-  public static Guid RegisterWaiter( TimeSpan timeout, Action<(bool timedOut, object? result)> onFinishOrTimeOut )
+  public static Guid RegisterWaiter( TimeSpan timeout, Action<(bool timedOut, string log)> onFinishOrTimeOut )
   {
     Guid waiterId = Guid.NewGuid();
     var state = new WaiterState( waiterId, timeout, onFinishOrTimeOut );
@@ -75,13 +88,27 @@ public static class ActivitySignalBridge
   }
 
   /// <summary>
-  /// Вызывается из Activity для передачи успешного результата.
+  /// Вызывает запись сигнала (лог) для ожидателя
   /// </summary>
-  public static void Signal( Guid waiterId, object? obj )
+  /// <param name="waiterId"></param>
+  /// <param name="message"></param>
+  public static void Signal( Guid waiterId, string? message )
   {
     if ( _waiters.TryGetValue( waiterId, out var state ) )
     {
-      state.Trigger( timedOut: false, result: obj );
+      state.LogLine( message: message );
+    }
+    // Если в словаре нет ключа, значит уже сработал таймаут и ожидатель удален. Ничего не делаем.
+  }
+
+  /// <summary>
+  /// Вызывается из Activity для передачи успешного результата.
+  /// </summary>
+  public static void Finish( Guid waiterId, string? message )
+  {
+    if ( _waiters.TryGetValue( waiterId, out var state ) )
+    {
+      state.Trigger( timedOut: false, message: message );
     }
     // Если в словаре нет ключа, значит уже сработал таймаут и ожидатель удален. Ничего не делаем.
   }

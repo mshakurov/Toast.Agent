@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 
 using Toast.Core.Commands;
+using Toast.Core.Utilities;
 using Toast.Core.Interfaces;
 using Toast.Core.Models;
 
@@ -37,7 +38,7 @@ namespace Toast.Core.Services
           }
           catch ( Exception ex )
           {
-            _context.Logger.Error( this, $"ProcessIterationAsync Error: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}" );
+            _context.Logger.Error( this, $"ProcessIterationAsync Error: {ex.GetFullMessage()}" );
           }
 
           var delay =
@@ -56,7 +57,7 @@ namespace Toast.Core.Services
       }
       catch ( Exception ex )
       {
-        _context.Logger.Error( this, $"Common AgentService Error: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}" );
+        _context.Logger.Error( this, $"Common AgentService Error: {ex.GetFullMessage()}" );
       }
       finally
       {

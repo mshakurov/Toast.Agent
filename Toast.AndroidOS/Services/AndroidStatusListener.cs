@@ -1,4 +1,5 @@
 ﻿using Toast.AndroidOS.Notifications;
+using Toast.Core.Utilities;
 using Toast.Core.Interfaces;
 using Toast.Core.Models;
 
@@ -45,7 +46,7 @@ namespace Toast.AndroidOS.Services
       }
       catch ( Exception ex )
       {
-        _logger?.Error( _context, $"Failed to update notification for status (({state.Count}){state.PendingStatus}): {ex.Message},{ex.InnerException?.Message},{ex.InnerException?.InnerException?.Message}" );
+        _logger?.Error( _context, $"Failed to update notification for status (({state.Count}){state.PendingStatus}): {ex.GetFullMessage()}" );
       }
     }
 

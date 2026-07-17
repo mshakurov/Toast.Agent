@@ -13,6 +13,7 @@ using Toast.Core.Commands;
 using Toast.AndroidOS.Models;
 using System.Diagnostics.CodeAnalysis;
 using Toast.AndroidOS.Services;
+using Toast.Core.Utilities;
 
 
 namespace Toast.AndroidOS.Activities
@@ -44,7 +45,7 @@ namespace Toast.AndroidOS.Activities
       }
       catch ( Exception ex )
       {
-        Android.Widget.Toast.MakeText( this, $"Не все компоненты найдены: {ex.Message}", ToastLength.Short )?.Show();
+        Android.Widget.Toast.MakeText( this, $"Не все компоненты найдены: {ex.GetFullMessage()}", ToastLength.Short )?.Show();
         return;
       }
 

@@ -35,7 +35,10 @@
 
         <div class="card">
           <RemoteServerEdit Data="@srv" DataChanged=@(async ( srvNew ) => await OnRemoteServerChange( idx, srvNew, srv, true ))>
-            <button type="button" class="btn btn-outline-danger btn-sm" onclick="@(async () => await RemoveServer( idx ))" title="Удалить сервер">Del</button>
+            <div class="input-group input-group-sm mb-3">
+              <button type="button" class="btn btn-outline-danger btn-sm" onclick="@(async () => await RemoveServer( idx ))" title="Удалить сервер">Del</button>
+              <button type="button" class="btn btn-outline-success btn-sm" @onclick="@AddNew" title="Добавить сервер">+</button>
+            </div>
           </RemoteServerEdit>
         </div>
       }

@@ -1,4 +1,6 @@
-﻿namespace Toast.Core.Commands
+﻿using Toast.Core.Utilities;
+
+namespace Toast.Core.Commands
 {
   internal static class CommandDataConverter
   {
@@ -12,7 +14,7 @@
       }
       catch ( Exception ex )
       {
-        return (default, $"# Ошибка десериализации Parameters а '{typeof( TTarget ).Name}': {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}");
+        return (default, $"# Ошибка десериализации Parameters а '{typeof( TTarget ).Name}': {ex.GetFullMessage()}");
       }
 
       if ( data == null )

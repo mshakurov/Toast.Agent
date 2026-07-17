@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Toast.Core.Commands.CommandData;
+using Toast.Core.Utilities;
 using Toast.Core.Interfaces;
 using Toast.Core.Models;
 
@@ -47,7 +48,7 @@ namespace Toast.Core.Commands
       }
       catch ( Exception ex )
       {
-        var error = $"# Ошибка сохранения: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}";
+        var error = $"# Ошибка сохранения: {ex.GetFullMessage()}";
         context.Logger.Error( this, error );
         return new CommandResult() { CommandId = command.Id, Success = false, Message = error };
       }

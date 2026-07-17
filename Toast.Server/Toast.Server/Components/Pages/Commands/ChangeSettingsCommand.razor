@@ -13,6 +13,10 @@
   <input type="number" class="form-control" placeholder="PollingInterval" aria-label="PollingInterval" aria-describedby="PollingInterval" @bind-value="@_data.PollingInterval" @bind-value:event="oninput" @onchange="NotifyParent" @bind-value:after="NotifyParent">
 </div>
 <div class="input-group input-group-sm mb-3">
+  <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="@LoadPredefinedServers" title="Считать ранее вводившиеся сервера"><i class="bi-cloud-upload"></i></button>
+  <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="@SavePredefinedServers" title="Сохранить сервера в базу"><i class="bi-save"></i></button>
+</div>
+<div class="input-group input-group-sm mb-3">
   <RemoteServerList @bind-Data=@_data.AddServers Header="Добавляемые сервера" @bind-Data:after="NotifyParent" />
 </div>
 <div class="input-group input-group-sm mb-3">
@@ -84,8 +88,25 @@
     log += "\n" + $"<<<";
   }
 
-  void LogFromRS(string msg)
+  void LogFromRS( string msg )
   {
     log += msg;
   }
+
+  async Task LoadPredefinedServers()
+  {
+    var servers = await commandService.GetPredefinedServers();
+
+    _data.AddServers = ( _data.AddServers ?? [] ).Union( servers, RemoteServer.Comparer )
+      .OrderBy( srv => srv.BaseUrl ).ThenBy( srv => srv.APIBasePath ).ThenBy( srv => srv.LoginModel?.Email ).ThenBy( srv => srv.LoginModel?.Password )
+      .ToArray();
+
+    await NotifyParent();
+  }
+
+  async Task SavePredefinedServers()
+  {
+    await commandService.UpdatePredefinedServers();
+  }
 }
+

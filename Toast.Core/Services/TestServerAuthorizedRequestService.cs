@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Toast.Core.Commands;
+using Toast.Core.Utilities;
 using Toast.Core.Interfaces;
 
 namespace Toast.Core.Services
@@ -32,7 +33,7 @@ namespace Toast.Core.Services
       catch ( Exception ex )
       {
         // Обработка ошибок сети
-        _logger.Error(this, $"Ошибка загрузки данных: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}" );
+        _logger.Error(this, $"Ошибка загрузки данных: {ex.GetFullMessage()}" );
 
         return ([], $"{ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}");
       }

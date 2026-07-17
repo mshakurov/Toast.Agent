@@ -16,54 +16,42 @@ internal class ShowMessageService( ILogger logger ) : IHostShowMessage
   {
     logger.Debug( this, $"StartShowMessage: '{message}', '{caption}', {duration}, onResult: {onResult != null}" );
 
-    StartShowMessage2( message, caption, duration );
+    StartShowMessageNotification( message, caption, duration );
 
-    if ( onResult != null )
-      Task.Run( () =>
+    Task.Run( () =>
+    {
+      logger.Debug( this, $"StartShowMessage" );
+
+      // 2. Формируем Intent для запуска Activity1
+      Intent activityIntent = new Intent( Application.Context, typeof( ShowMessageActivity ) );
+      activityIntent.AddFlags( ActivityFlags.NewTask );
+
+      if ( onResult != null )
       {
-        // 1. Регистрируем ожидание на 10 секунд и передаем делегат (OnFinishOrTimeOut)
+        // Регистрируем ожидание на 10 секунд и передаем делегат (OnFinishOrTimeOut)
         Guid waiterId = ActivitySignalBridge.RegisterWaiter(
             TimeSpan.FromSeconds( duration + 5 ),
-            result => onResult( $"TimedOut: {result.timedOut}, {result.result}" )
+            result => onResult( $"(TimedOut:{result.timedOut}) {System.Environment.NewLine}'{result.log}'" )
         );
 
         logger.Debug( this, $"StartShowMessage: waiterId: {waiterId}" );
 
-        // 2. Формируем Intent для запуска Activity1
-        Intent activityIntent = new Intent( Application.Context, typeof( ShowMessageActivity ) );
-        activityIntent.AddFlags( ActivityFlags.NewTask );
-
         // Передаем Guid в виде строки через Extra
         activityIntent.PutExtra( ActivitySignalBridge.C_EXTRA_WAITER_ID, waiterId.ToString() );
-        activityIntent.PutExtra( ShowMessageActivity.C_IntentExtraText, message );
-        activityIntent.PutExtra( ShowMessageActivity.C_IntentExtraTitle, caption );
-        activityIntent.PutExtra( ShowMessageActivity.C_IntentExtraDuration, duration );
+      }
+      activityIntent.PutExtra( ShowMessageActivity.C_IntentExtraText, message );
+      activityIntent.PutExtra( ShowMessageActivity.C_IntentExtraTitle, caption );
+      activityIntent.PutExtra( ShowMessageActivity.C_IntentExtraDuration, duration );
 
-        logger.Debug( this, $"StartShowMessage: > StartActivity" );
+      logger.Debug( this, $"StartShowMessage: > StartActivity" );
 
-        Application.Context.StartActivity( activityIntent );
+      Application.Context.StartActivity( activityIntent );
 
-        logger.Debug( this, $"StartShowMessage: < StartActivity" );
-      } );
-    else
-      Task.Run( () =>
-      {
-        Intent activityIntent = new Intent( Application.Context, typeof( ShowMessageActivity ) );
-        activityIntent.AddFlags( ActivityFlags.NewTask );
-
-        activityIntent.PutExtra( ShowMessageActivity.C_IntentExtraText, message );
-        activityIntent.PutExtra( ShowMessageActivity.C_IntentExtraTitle, caption );
-        activityIntent.PutExtra( ShowMessageActivity.C_IntentExtraDuration, duration );
-
-        logger.Debug( this, $"StartShowMessage: > StartActivity" );
-
-        Application.Context.StartActivity( activityIntent );
-
-        logger.Debug( this, $"StartShowMessage: < StartActivity" );
-      } );
+      logger.Debug( this, $"StartShowMessage: < StartActivity" );
+    } );
   }
 
-  public void StartShowMessage2( string message, string caption, int duration )
+  public void StartShowMessageNotification( string message, string caption, int duration )
   {
     logger.Debug( this, $"StartShowMessage2: '{message}', '{caption}', {duration}" );
 

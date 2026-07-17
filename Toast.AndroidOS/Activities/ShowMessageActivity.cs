@@ -9,6 +9,7 @@ using Android.OS;
 using Android.Views;
 
 using Toast.AndroidOS.Bootstrap;
+using Toast.Core.Utilities;
 using Toast.Core.Interfaces;
 
 namespace Toast.AndroidOS.Activities;
@@ -28,6 +29,7 @@ public class ShowMessageActivity : Activity
   int durationSeconds = 5;
   string initialButtonText = "OK";
   string title = "Сообщение";
+  Guid? _waiterId;
 
   TextView? textView;
   Button? okButton;
@@ -38,14 +40,13 @@ public class ShowMessageActivity : Activity
 
     logger = CompositionRoot.GetSingletonLogger();
 
-    logger.Debug(this, $"OnCreate ({savedInstanceState?.KeySet()?.Count} keys)" );
+    logger.Debug( this, $"OnCreate ({savedInstanceState?.KeySet()?.Count} keys)" );
 
     savedInstanceState?.KeySet()?.ToList().ForEach( key =>
     {
       var value = savedInstanceState.GetString( key );
       logger.Debug( this, $"SavedInstanceState: {key} = {value}" );
     } );
-
 
     SetContentView( Resource.Layout.activity_show_message );
 
@@ -60,7 +61,9 @@ public class ShowMessageActivity : Activity
     durationSeconds = Intent?.GetIntExtra( ShowMessageActivity.C_IntentExtraDuration, durationSeconds ) ?? durationSeconds;
     title = Intent?.GetStringExtra( ShowMessageActivity.C_IntentExtraTitle ) ?? title;
 
-    logger.Debug( this, $"OnCreate: durationSeconds={durationSeconds}, title:'{title}', rawText=({rawText.Length})'{rawText.Substring( 0, Math.Min( rawText.Length, 30 ) )}'" );
+    _waiterId = Guid.TryParse( Intent?.GetStringExtra( ActivitySignalBridge.C_EXTRA_WAITER_ID ), out var id ) ? id : null;
+
+    logger.Debug( this, $"OnCreate: durationSeconds={durationSeconds}, title:'{title}', rawText=({rawText.Length})'{rawText.Substring( 0, Math.Min( rawText.Length, 30 ) )}'. waiter:{_waiterId}" );
 
     // 2. Заменяем комбинацию "\n" на настоящий перевод строки
     string displayText = rawText.Replace( "\\n", System.Environment.NewLine );
@@ -82,7 +85,9 @@ public class ShowMessageActivity : Activity
       okButton.Click += ( sender, e ) =>
       {
         _cts.Cancel();
-        FinishAndRemoveTask();
+        SignalWaiter( "OK Clicked" );
+        if ( !IsFinishing )
+          FinishAndRemoveTask();
       };
 
       okButton.RequestFocus();
@@ -104,31 +109,28 @@ public class ShowMessageActivity : Activity
   {
     base.OnStart();
 
-    logger?.Debug( this, "OnStart" );
-
-
     // Оповещаем, если был ожидатель
-    if ( Guid.TryParse( Intent?.GetStringExtra( ActivitySignalBridge.C_EXTRA_WAITER_ID ), out var _waiterId ) )
-    {
-      //logger?.Debug( this, $"OnStart: > ActivitySignalBridge.Signal('After SetupWindowSize')" );
+    SignalWaiter( "After OnStart" );
 
-      ActivitySignalBridge.Signal( _waiterId, "After SetupWindowSize" );
-
-      //logger?.Debug( this, $"OnStart: < ActivitySignalBridge.Signal('After SetupWindowSize')" );
-    }
-
+    logger?.Debug( this, "OnStart" );
   }
 
   public override void OnAttachedToWindow()
   {
     base.OnAttachedToWindow();
 
-    logger?.Debug(this, "OnAttachedToWindow" );
+    // Оповещаем, если был ожидатель
+    SignalWaiter( "After OnAttachedToWindow" );
+
+    logger?.Debug( this, "OnAttachedToWindow" );
   }
 
   public override void OnWindowFocusChanged( bool hasFocus )
   {
     base.OnWindowFocusChanged( hasFocus );
+
+    // Оповещаем, если был ожидатель
+    SignalWaiter( "After OnWindowFocusChanged" );
 
     logger?.Debug( this, $"OnWindowFocusChanged({hasFocus})" );
   }
@@ -146,6 +148,9 @@ public class ShowMessageActivity : Activity
     Window.SetGravity( GravityFlags.Center );
     // Убираем рамку диалога, если тема не полностью подходит
     //Window.SetBackgroundDrawableResource( Android.Resource.Color.Transparent );
+
+    // Оповещаем, если был ожидатель
+    SignalWaiter( "After SetupWindowSize" );
   }
 
   private Task StartTextChange( CancellationToken token )
@@ -155,17 +160,28 @@ public class ShowMessageActivity : Activity
 
     return Task.Factory.StartNew( () =>
     {
+      SignalWaiter( $"TextChange Started" );
+
       // счетчик сразу не стартуем, чтобы в первый раз нарисовать durationSeconds и после этого начать отсчет
       System.Diagnostics.Stopwatch stopwatch = new();
       // чтобы в первый раз написать durationSeconds секунд
       int lastRemainingSecondsSeconds = durationSeconds + 1;
+      int GetRemainingSeconds() => ( int ) Math.Ceiling( durationSeconds - stopwatch.Elapsed.TotalSeconds );
+      bool finished = false;
       while ( !token.IsCancellationRequested && !IsFinishing )
       {
-        int remainingSeconds = ( int ) ( durationSeconds - stopwatch.Elapsed.TotalSeconds );
+        int remainingSeconds = GetRemainingSeconds();
         if ( remainingSeconds <= 0 )
         {
+          finished = true;
+          stopwatch.Stop();
+
+          SignalWaiter( $"TextChange Finished ({remainingSeconds})", true );
+
           if ( !IsFinishing )
             FinishAndRemoveTask();
+
+          break;
         }
         if ( lastRemainingSecondsSeconds != remainingSeconds )
         {
@@ -189,6 +205,9 @@ public class ShowMessageActivity : Activity
           // Игнорируем ошибки
         }
       }
+
+      if( !finished )
+        SignalWaiter( $"TextChange Aborted ({GetRemainingSeconds()})", true );
     }, token );
   }
 
@@ -210,7 +229,11 @@ public class ShowMessageActivity : Activity
       }
     } );
 
-    try { tcs.Task.Wait( token ); } catch { }
+    try { tcs.Task.Wait( token ); } 
+    catch (Exception ex)
+    {
+      logger?.Debug( this, $"# WaitOnUI Error: {ex.GetFullMessage()}" );
+    }
   }
 
   private async Task AutoCloseAfterDelay( int durationSeconds, CancellationToken token )
@@ -224,7 +247,25 @@ public class ShowMessageActivity : Activity
       // Игнорируем ошибки
     }
 
+    SignalWaiter( "AutoCloseAfterDelay", true );
+
     if ( !IsFinishing )
       FinishAndRemoveTask();
+  }
+
+  void SignalWaiter( string message, bool finish = false )
+  {
+    // Оповещаем, если был ожидатель
+    if ( _waiterId != null )
+    {
+      //logger?.Debug( this, $"OnStart: > ActivitySignalBridge.Signal('After SetupWindowSize')" );
+
+      if ( finish )
+        ActivitySignalBridge.Finish( _waiterId.Value, message );
+      else
+        ActivitySignalBridge.Signal( _waiterId.Value, message );
+
+      //logger?.Debug( this, $"OnStart: < ActivitySignalBridge.Signal('After SetupWindowSize')" );
+    }
   }
 }

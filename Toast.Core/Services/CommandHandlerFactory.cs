@@ -18,6 +18,7 @@ namespace Toast.Core.Services
       [
           new ShowMessageCommandHandler(serviceContext, context),
           new ChangeSettingsCommandHandler(serviceContext, context),
+          new GetDeviceInfoCommandHandler(serviceContext, context),
       ];
     }
   }

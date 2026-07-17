@@ -17,16 +17,18 @@
     <TabControl ActiveTabOnStart="@commandService.Current.SendCommand_SelectedTab" OnActiveTabChanged="@(tab => commandService.Current.SendCommand_SelectedTab = tab)">
       <Tab Name="@PageComponents.ShowMessage" Title="ShowMessage">
         <ShowMessageCommand @bind-Data="@commandService.Current.ShowMessageData">
-          <button type="button" class="btn btn-primary btn-sm" disabled="@sending" onclick="@(async () => await SendCommand( commandService.Current.ShowMessageData ))">Send</button>
+          <button type="button" class="btn btn-primary btn-sm" disabled="@sending" onclick="@(async () => await SendCommand( commandService.Current.ShowMessageData, Core.Commands.CommandTypes.ShowMessage ))">Send command</button>
         </ShowMessageCommand>
       </Tab>
       <Tab Name="@PageComponents.ChangeSettings" Title="ChangeSettings">
         <ChangeSettingsCommand @bind-Data="@commandService.Current.ChangeSettingsData">
-          <button type="button" class="btn btn-primary btn-sm" disabled="@sending" onclick="@(async () => await SendCommand( commandService.Current.ChangeSettingsData ))">Send</button>
+          <button type="button" class="btn btn-primary btn-sm" disabled="@sending" onclick="@(async () => await SendCommand( commandService.Current.ChangeSettingsData, Core.Commands.CommandTypes.ChangeSettings ))">Send command</button>
         </ChangeSettingsCommand>
       </Tab>
     </TabControl>
   </div>
+
+  <button type="button" class="btn btn-outline-primary btn-sm" @onclick="@RequestDeviceInfo" title="Запросить информацию по выделенным устройствам"><i class="bi bi-cloud-download-fill"></i></button>
 
   @if ( alert != null )
   {
@@ -57,7 +59,7 @@
       commandService.Current.SendCommand_SelectedTab = PageComponents.ShowMessage;
   }
 
-  async Task SendCommand( object? data )
+  async Task SendCommand( object? data, string commandType )
   {
     await Task.CompletedTask;
 
@@ -71,27 +73,36 @@
     sending = true;
     StateHasChanged();
 
-    if ( data is ShowMessageData showMessageData )
-      _ = Task.Run( async () =>
+    _ = Task.Run( async () =>
+    {
+      try
       {
-        try
-        {
-          var commands = await commandService.EnqueueCommandAsync( @commandService.Current.SelectedCommandClients, showMessageData.CloneEx() );
+        CommandDataBase clone = data is ShowMessageData showMessageData ? showMessageData.CloneEx()
+      : data is ChangeSettingsData settingsData ? settingsData.CloneEx()
+      : throw new Exception( "### Program error - unsupported command data type" );
 
-          ShowAlert( $"Команда успешно поставлена в очередь для {commands.Count}", 5, 1 );
-        }
-        catch ( Exception ex )
-        {
-          alert = $"Ошибка отправки команд: {ex}";
-          alertRows = 5;
-          StateHasChanged();
-        }
-        finally
-        {
-          sending = false;
-          await InvokeAsync( StateHasChanged );
-        }
-      } );
+        var commands = await commandService.EnqueueCommandAsync( @commandService.Current.SelectedCommandClients, commandType, clone );
+
+        await commandService.UpdatePredefinedServers();
+
+        ShowAlert( $"Команда успешно поставлена в очередь для {commands.Count}", 5, 1 );
+      }
+      catch ( Exception ex )
+      {
+        alert = $"Ошибка отправки команд: {ex}";
+        alertRows = 5;
+        StateHasChanged();
+      }
+      finally
+      {
+        sending = false;
+        await InvokeAsync( StateHasChanged );
+      }
+    } );
+  }
+
+  async Task RequestDeviceInfo()
+  {
   }
 
   void ShowAlert( string msg, int seconds = 5, int rows = 3 )

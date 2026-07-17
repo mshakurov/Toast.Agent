@@ -72,7 +72,7 @@ namespace Toast.Server.Data
     public async Task<IReadOnlyList<AgentSession>> GetSessions( long[] sessionIds, CancellationToken token = default )
       => await InContext( async dbContext => await dbContext.AgentSession.Where( s => sessionIds.Contains( s.Id ) ).ToListAsync() );
 
-    public async Task<List<AgentCommandFor>> EnqueueCommandAsync( List<string> selectedCommandClients, CommandDataBase commandData, CancellationToken? token = default )
+    public async Task<List<AgentCommandFor>> EnqueueCommandAsync( List<string> selectedCommandClients, string commandType, CommandDataBase commandData, CancellationToken? token = default )
     {
       List<AgentCommandFor> added = new( selectedCommandClients.Count );
 
@@ -85,7 +85,7 @@ namespace Toast.Server.Data
           Command = new AgentCommand()
           {
             Id = Guid.NewGuid(),
-            Type = CommandTypes.ShowMessage,
+            Type = commandType,
             JsonParameters = JsonSerializer.Serialize( commandData, commandData.GetType() )
           }
         } ).Entity );
@@ -185,9 +185,68 @@ namespace Toast.Server.Data
 
     public async Task<CommandResult?> GetCommandResult( string clientId, Guid commandId, CancellationToken token = default )
     {
-      using var dbContext = await dbFactory.CreateDbContextAsync(token);
+      using var dbContext = await dbFactory.CreateDbContextAsync( token );
 
       return await dbContext.AgentResultDB.Where( c => c.AgentId == clientId ).AsNoTracking().Include( r => r.Results ).SelectMany( r => r.Results ).FirstAsync( r => r.CommandId == commandId, token );
+    }
+
+    public async Task<IReadOnlyList<(RemoteServerDB entity, RemoteServer server)>> GetPredefinedServers( ApplicationDbContext dbContext, CancellationToken token = default )
+    {
+      var dbEntityList = await dbContext.PredefinedServers.ToListAsync();
+
+      return dbEntityList.Select( e =>
+      {
+        try
+        {
+          var srv = e.GetRemoteServer();
+          return (e, srv);
+        }
+        catch ( Exception ex )
+        {
+          Console.WriteLine( $"# Invalid {nameof( RemoteServerDB )}.{nameof( RemoteServerDB.Json )}: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}" );
+          return (e, null);
+        }
+      } ).Where( d => d.srv != null && d.srv.IsValid() )
+      .Select( d => (d.e, srv: ( RemoteServer ) d.srv!) )
+      .OrderBy( d => d.srv.BaseUrl ).ThenBy( d => d.srv.APIBasePath ).ThenBy( d => d.srv.LoginModel?.Email ).ThenBy( d => d.srv.LoginModel?.Password )
+      .DistinctBy( d => d.srv.GetKey(), StringComparer.InvariantCultureIgnoreCase )
+      .ToList();
+    }
+
+    public async Task<IReadOnlyList<RemoteServer>> GetPredefinedServers( CancellationToken token = default )
+    {
+      using var dbContext = await dbFactory.CreateDbContextAsync( token );
+
+      return ( await GetPredefinedServers( dbContext, token ) ).Select( s => s.server ).ToArray();
+    }
+
+    public async Task UpdatePredefinedServers( CancellationToken token = default )
+    {
+      try
+      {
+        using var dbContext = await dbFactory.CreateDbContextAsync( token );
+
+        var dbEntityList = await dbContext.PredefinedServers.ToListAsync();
+        var dbList = await GetPredefinedServers( dbContext, token );
+
+        // удаляем невалидные
+        dbContext.PredefinedServers.RemoveRange( dbEntityList.Where( e => !dbList.Any( s => s.entity.Id == e.Id ) ).ToArray() );
+
+        var uiList = ( Current.ChangeSettingsData.AddServers ?? [] ).Union( ( Current.ChangeSettingsData.RemoveServers ?? [] ), RemoteServer.Comparer ).Where( s => s.IsValid() )
+          .OrderBy( ui => ui.BaseUrl ).ThenBy( ui => ui.APIBasePath ).ThenBy( ui => ui.LoginModel?.Email ).ThenBy( ui => ui.LoginModel?.Password )
+          .ToList();
+
+        // исключаем совпавшие
+        uiList = [.. uiList.Where( ui => !dbList.Any( s => RemoteServer.Comparer.Equals( ui, s.server ) ) )];
+
+        dbContext.PredefinedServers.AddRange( uiList.Select( RemoteServerDB.CreateFrom ) );
+
+        await dbContext.SaveChangesAsync( token );
+      }
+      catch ( Exception ex )
+      {
+        Console.WriteLine( $"### Error updating PredefinedServers: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}" );
+      }
     }
 
     public class State

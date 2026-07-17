@@ -7,10 +7,10 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Toast.Core.Commands;
+using Toast.Core.Utilities;
 using Toast.Core.Interfaces;
 using Toast.Core.Models;
 using Toast.Core.Networking;
-using Toast.Core.Utilities;
 
 namespace Toast.Core.Services
 {
@@ -28,7 +28,7 @@ namespace Toast.Core.Services
       if ( _context.Settings.LastSuccessfulServerIndex > _context.Settings.Servers.Length - 1 )
         _context.Settings.LastSuccessfulServerIndex = 0;
 
-      var servers = _context.Settings.Servers.Select( ( s, i ) => (s, i: ( ushort ) i) ).Take( ushort.MaxValue ).Where( s => !string.IsNullOrWhiteSpace( s.s.HostURL ) && s.s.LoginModel != null && !string.IsNullOrWhiteSpace( s.s.LoginModel.Email ) ).OrderBy( s => s.i == _context.Settings.LastSuccessfulServerIndex ? 1 : 2 ).ThenBy( s => s.i ).ToArray();
+      var servers = _context.Settings.Servers.Select( ( s, i ) => (s, i: ( ushort ) i) ).Where( s => s.s.IsValid() ).Take( ushort.MaxValue ).OrderBy( s => s.i == _context.Settings.LastSuccessfulServerIndex ? 1 : 2 ).ThenBy( s => s.i ).ToArray();
       if ( servers.Length == 0 )
       {
         throw new Exception( $"# Не найден ни один правильно настроенный сервер" );
@@ -270,7 +270,7 @@ namespace Toast.Core.Services
       }
       catch ( Exception ex )
       {
-        return $"{ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}";
+        return $"{ex.GetFullMessage()}";
       }
       finally
       {

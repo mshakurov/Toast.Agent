@@ -5,6 +5,7 @@ using Android.App;
 using Android.Content;
 
 using Toast.AndroidOS.Models;
+using Toast.Core.Utilities;
 using Toast.Core.Interfaces;
 
 
@@ -52,7 +53,7 @@ public class SettingsService( string package_name, ILogger logger )
       }
       catch ( Exception exc )
       {
-        LogError( $"# Десериал настр: {exc.Message}{( exc.InnerException != null ? $", {exc.InnerException.Message}" : string.Empty )}{( exc.InnerException?.InnerException != null ? $", exc.InnerException.InnerException.Message" : string.Empty )}" );
+        LogError( $"# Десериал настр: {exc.GetFullMessage()}" );
 
         // На случай, если вы измените структуру класса в будущем
         return new HostSettings();
@@ -101,7 +102,7 @@ public class SettingsService( string package_name, ILogger logger )
       }
       catch ( Exception exc )
       {
-        LogError( $"# Не сохран настр: {exc.Message}{( exc.InnerException != null ? $", {exc.InnerException.Message}" : string.Empty )}{( exc.InnerException?.InnerException != null ? $", exc.InnerException.InnerException.Message" : string.Empty )}" );
+        LogError( $"# Не сохран настр: {exc.GetFullMessage()}" );
       }
     }
   }

@@ -1,6 +1,8 @@
 ﻿using Android.App;
 using Android.Provider;
 
+using Toast.Core.Utilities;
+
 namespace Toast.AndroidOS.Services;
 
 public static class DeviceInfoProviderService
@@ -25,7 +27,7 @@ public static class DeviceInfoProviderService
     }
     catch ( Exception ex )
     {
-      return $"# Can't read 'Settings.Secure.AndroidId': {ex.Message}. {Guid.NewGuid()}";
+      return $"# Can't read 'Settings.Secure.AndroidId': {ex.GetFullMessage()}. {Guid.NewGuid()}";
     }
   }
 }

@@ -29,5 +29,12 @@ namespace Toast.Core.Interfaces
     /// </summary>
     /// <returns></returns>
     Task Update();
+
+
+    /// <summary>
+    /// Возвращает информацию об устройстве
+    /// </summary>
+    /// <returns></returns>
+    Task<string> GetDeviceInfoAsync( CancellationToken token );
   }
 }

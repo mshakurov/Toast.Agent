@@ -1,4 +1,5 @@
 ﻿using Toast.Core.Commands;
+using Toast.Core.Utilities;
 using Toast.Core.Interfaces;
 
 namespace Toast.Core.Services;
@@ -42,7 +43,7 @@ internal sealed class CommandDispatcher
       {
         CommandId = command.Id,
         Success = false,
-        Message = $"Error executing: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}"
+        Message = $"Error command '{command.Type}' executing: {ex.GetFullMessage()}"
       };
     }
   }
