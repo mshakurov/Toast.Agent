@@ -17,6 +17,6 @@ namespace Toast.Core.Commands
     public string CommandType => CommandTypes.GetDeviceInfo;
 
     public async Task<CommandResult> ExecuteAsync( AgentCommand command, CancellationToken cancellationToken ) 
-      => new CommandResult { CommandId = command.Id, Message = await context.Settings.GetDeviceInfoAsync( cancellationToken ) };
+      => new CommandResult { CommandId = command.Id, Success = true, Message = await context.Settings.GetDeviceInfoAsync( cancellationToken ) };
   }
 }

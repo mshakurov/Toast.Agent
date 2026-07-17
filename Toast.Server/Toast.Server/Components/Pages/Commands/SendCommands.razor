@@ -25,10 +25,11 @@
           <button type="button" class="btn btn-primary btn-sm" disabled="@sending" onclick="@(async () => await SendCommand( commandService.Current.ChangeSettingsData, Core.Commands.CommandTypes.ChangeSettings ))">Send command</button>
         </ChangeSettingsCommand>
       </Tab>
+      <Tab Name="@PageComponents.GetDeviceInfo" Title="GetDeviceInfo">
+        <button type="button" class="btn btn-primary btn-sm" onclick="@(async () => await SendCommand( null, Core.Commands.CommandTypes.GetDeviceInfo ))" title="Запросить информацию по выделенным устройствам"><i class="bi bi-cloud-download-fill"></i></button>
+      </Tab>
     </TabControl>
   </div>
-
-  <button type="button" class="btn btn-outline-primary btn-sm" @onclick="@RequestDeviceInfo" title="Запросить информацию по выделенным устройствам"><i class="bi bi-cloud-download-fill"></i></button>
 
   @if ( alert != null )
   {
@@ -45,6 +46,7 @@
   {
     ShowMessage,
     ChangeSettings,
+    GetDeviceInfo,
   }
 
   string? alert = null;
@@ -78,14 +80,15 @@
       try
       {
         CommandDataBase clone = data is ShowMessageData showMessageData ? showMessageData.CloneEx()
-      : data is ChangeSettingsData settingsData ? settingsData.CloneEx()
-      : throw new Exception( "### Program error - unsupported command data type" );
+          : data is ChangeSettingsData settingsData ? settingsData.CloneEx()
+          : commandType == Core.Commands.CommandTypes.GetDeviceInfo ? new()
+          : throw new Exception( "### Program error - unsupported command data type" );
 
         var commands = await commandService.EnqueueCommandAsync( @commandService.Current.SelectedCommandClients, commandType, clone );
 
         await commandService.UpdatePredefinedServers();
 
-        ShowAlert( $"Команда успешно поставлена в очередь для {commands.Count}", 5, 1 );
+        ShowAlert( $"Команда успешно поставлена в очередь для {commands.Count} клиентов", 5, 1 );
       }
       catch ( Exception ex )
       {
@@ -101,9 +104,6 @@
     } );
   }
 
-  async Task RequestDeviceInfo()
-  {
-  }
 
   void ShowAlert( string msg, int seconds = 5, int rows = 3 )
   {

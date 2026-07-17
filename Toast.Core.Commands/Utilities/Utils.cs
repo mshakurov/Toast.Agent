@@ -61,6 +61,8 @@ public static class Utils
       return str.PadRight( len, c );
   }
 
+  public static string TrimRight( this string? str, int len ) => str != null && str.Length > len ? $"{str[..len]}.." : ( str ?? string.Empty );
+
   public static string? GetFullMessage( this Exception exc, string delimiter = ", ", HashSet<Exception>? hash = null )
   {
     if ( exc == null )

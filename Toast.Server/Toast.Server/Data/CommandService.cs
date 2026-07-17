@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 using Toast.Core.Commands;
 using Toast.Core.Commands.CommandData;
+using Toast.Core.Utilities;
 using Toast.Server.Api;
 using Toast.Server.Data.Models;
 
@@ -44,7 +45,22 @@ namespace Toast.Server.Data
 
       var (agentClient, created) = await GetOrCreateClient( dbContext, request.AgentId, clientInfo, token );
       if ( created )
-        return new AgentResponse();
+      {
+        AgentCommandFor? agentCommandFor = null;
+        var agentResponse = new AgentResponse();
+        try
+        {
+          agentCommandFor = ( await EnqueueCommandAsync( [agentClient.ClientId], CommandTypes.GetDeviceInfo, new CommandDataBase(), token ) ).FirstOrDefault();
+          if ( agentCommandFor != null )
+            agentResponse.Commands = [agentCommandFor.Command];
+        }
+        catch ( Exception ex )
+        {
+          ConsoleWriteLineError( $"### Error create command for new Client: {ex.GetFullMessage()}" );
+        }
+
+        return agentResponse;
+      }
       else
       {
         var now = DateTime.UtcNow;
@@ -57,10 +73,7 @@ namespace Toast.Server.Data
         }
         catch ( Exception exSave )
         {
-          Console.BackgroundColor = ConsoleColor.Red;
-          Console.ForegroundColor = ConsoleColor.Yellow;
-          Console.WriteLine( $"### Ошибка сохранения отправленных AgentCommandFor после отправки команд: {exSave}" );
-          Console.ResetColor();
+          ConsoleWriteLineError( $"### Ошибка сохранения отправленных AgentCommandFor после отправки команд: {exSave.GetFullMessage()}" );
         }
         return new AgentResponse { Commands = [.. commandsFor.Select( cf => cf.Command )] };
       }
@@ -107,7 +120,7 @@ namespace Toast.Server.Data
 
       agentClient.LastSet = clientInfo?.time ?? DateTime.UtcNow;
 
-      // исключаем принятые результаты из ответа, если вдруг они перепутались между ответами
+      // исключаем принятые результаты из ответа, если вдруг результаты вдруг повторились из-за ошибок на клиенте
       var commandIdHashNew = agentResult.Results.Select( r => r.CommandId ).ToHashSet();
       int duplicateCount = 0;
       foreach ( var r in await dbContext.AgentResultDB.Where( c => c.AgentId == agentResult.AgentId ).AsNoTracking().SelectMany( c => c.Results )
@@ -132,6 +145,7 @@ namespace Toast.Server.Data
         Console.ResetColor();
       }
       else
+      if ( duplicateCount > 0 )
       {
         Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine( $"SetResults: Duplicated commands: {duplicateCount} (agentId: {added.Entity.AgentId})" );
@@ -192,7 +206,7 @@ namespace Toast.Server.Data
 
     public async Task<IReadOnlyList<(RemoteServerDB entity, RemoteServer server)>> GetPredefinedServers( ApplicationDbContext dbContext, CancellationToken token = default )
     {
-      var dbEntityList = await dbContext.PredefinedServers.ToListAsync();
+      var dbEntityList = await dbContext.PredefinedServers.AsNoTracking().ToListAsync();
 
       return dbEntityList.Select( e =>
       {
@@ -203,7 +217,7 @@ namespace Toast.Server.Data
         }
         catch ( Exception ex )
         {
-          Console.WriteLine( $"# Invalid {nameof( RemoteServerDB )}.{nameof( RemoteServerDB.Json )}: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}" );
+          Console.WriteLine( $"# Invalid {nameof( RemoteServerDB )}.{nameof( RemoteServerDB.Json )}: {ex.GetFullMessage()}" );
           return (e, null);
         }
       } ).Where( d => d.srv != null && d.srv.IsValid() )
@@ -245,8 +259,60 @@ namespace Toast.Server.Data
       }
       catch ( Exception ex )
       {
-        Console.WriteLine( $"### Error updating PredefinedServers: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}" );
+        Console.WriteLine( $"### Error updating PredefinedServers: {ex.GetFullMessage()}" );
       }
+    }
+
+    public async Task<CommandResultInfo[]> GetLastDeviceInfos( string commandType, string filter, int maxRows, CancellationToken token = default )
+    {
+      using var dbContext = await dbFactory.CreateDbContextAsync( token );
+
+      filter = filter.ToLower();
+
+      var query
+        = dbContext.AgentResultDB.AsNoTracking()
+          .OrderByDescending( r => r.Received ).Include( r => r.Results ).AsNoTracking().SelectMany( r => r.Results.Select( CommandResult => new { r.AgentId, r.Received, CommandResult } ) )
+        .Join( dbContext.AgentCommandFor.AsNoTracking().Include( c => c.Command ).Where( c => c.Command.Type == commandType ), r => r.CommandResult.CommandId, c => c.Command.Id, ( r, c ) => new { r.AgentId, r.Received, r.CommandResult, c.Command } )
+        .Join( dbContext.AgentClient.AsNoTracking(), r => r.AgentId, c => c.ClientId, ( r, Client ) => new { Client, r.Received, r.CommandResult, r.Command } )
+        .GroupJoin( dbContext.AgentSession, r => r.Client.LastAgentSessionId, s => s.Id, ( r, lastSessions ) => new { r.Client, r.Received, r.CommandResult, r.Command, LastSession = lastSessions.FirstOrDefault() } )
+        ;
+
+      if ( maxRows >= 1 )
+        query = query.Take( maxRows );
+
+      var data = ( await
+        query
+        .ToListAsync( token ) 
+        )
+        .Select( r => new CommandResultInfo( r.Client, r.Received, r.CommandResult, r.Command, r.LastSession ) )
+        .Where( r => string.IsNullOrEmpty( filter )
+          || r.Client.ClientId.ToLower().Contains( filter )
+          || r.ClientInfo.ToLower().Contains( filter )
+          || r.CommandResultFullInfo.ToLower().Contains( filter )
+          || r.LastSessionInfo.ToLower().Contains( filter )
+          || r.ReceivedStr.ToLower().Contains( filter )
+        )
+        .ToArray();
+
+      List<CommandResultInfo> results = [];
+      var sessionDict = ( await GetSessions( data.Where( c => c.LastSession is null ).Select( c => c.Client.LastAgentSessionId ).ToArray() ) ).ToDictionary( s => s.Id );
+      foreach ( var row in data )
+      {
+        var lastSession = row.LastSession ?? ( sessionDict.TryGetValue( row.Client.LastAgentSessionId, out var session ) ? session : null );
+
+        results.Add( new CommandResultInfo( row.Client, row.Received, row.CommandResult, row.Command, lastSession ) );
+      }
+
+      return results.ToArray();
+    }
+
+    void ConsoleWriteLineError( string error )
+    {
+      Console.BackgroundColor = ConsoleColor.Red;
+      Console.ForegroundColor = ConsoleColor.Yellow;
+      Console.WriteLine( error );
+      Console.ResetColor();
+
     }
 
     public class State
@@ -262,8 +328,50 @@ namespace Toast.Server.Data
       public List<string> SelectedCommandClients { get; set; } = [];
 
       public string? SelectedDBTablesTypeFullName { get; set; }
+
+      public int ViewCommandResults_MaxRows { get; set; }
+      public string ViewCommandResults_Filter { get; set; } = string.Empty;
+      public object ViewCommandResults_SelectedCommandType { get; set; } = CommandTypes.GetDeviceInfo;
+      public CommandResultInfo[] ViewCommandResults_ResultCollection { get; set; } = [];
     }
 
     public record ClientInfo( string? remoteIpAddress, int remotePort, int localPort, string? userIdentityName, DateTime time );
+  }
+
+  public class CommandResultInfo
+  {
+    public readonly AgentClient Client;
+    public readonly DateTime? Received;
+    public readonly CommandResult CommandResult;
+    public readonly AgentCommand Command;
+    public readonly AgentSession? LastSession;
+
+    public readonly string ClientInfo;
+    public readonly string ReceivedStr;
+    public readonly string LastSessionInfo;
+    public readonly string CommandResultShortInfo;
+    public readonly string CommandResultFullInfo;
+
+    public CommandResultInfo( AgentClient Client, DateTime? Received, CommandResult CommandResult, AgentCommand Command, AgentSession? LastSession )
+    {
+      this.Client = Client;
+      this.Received = Received;
+      this.CommandResult = CommandResult;
+      this.Command = Command;
+      this.LastSession = LastSession;
+
+      ClientInfo = $@"{Client.ClientId}
+Get/Set: {Client.LastGet:s}/{Client.LastSet:s}";
+
+      ReceivedStr = Received is not null ? Received.Value.ToString("s") : string.Empty;
+
+      LastSessionInfo = string.Empty;
+      if (LastSession != null)
+        LastSessionInfo = @$"{LastSession.RemoteIPAddress}:{LastSession.LocalPort}@{LastSession.UserIdentityName}";
+
+      CommandResultShortInfo = $"[{( CommandResult.Success ? "!" : "#" )}, {CommandResult.Message.TrimRight( 100 )}]";
+
+      CommandResultFullInfo = $"- [{( CommandResult.Success ? "!" : "#" )}, Сообщ: {CommandResult.Message}]";
+    }
   }
 }

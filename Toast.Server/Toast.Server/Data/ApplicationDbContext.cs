@@ -54,8 +54,7 @@ namespace Toast.Server.Data
           builder.HasKey( "Id" );
         } );
 
-      //builder.Entity<CommandResult>()
-      //  .HasKey( c => c.CommandId );
+
 
       builder.Entity<AgentSession>().HasKey( c => c.Id );
 

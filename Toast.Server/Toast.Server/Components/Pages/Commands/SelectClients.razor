@@ -1,4 +1,5 @@
-﻿@using Toast.Server.Data
+﻿@using Toast.Core.Utilities
+@using Toast.Server.Data
 @using Toast.Server.Data.Models
 @inject CommandService commandService;
 
@@ -98,7 +99,7 @@ else
     }
     catch ( Exception ex )
     {
-      loadClientsError = $"{ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}";
+      loadClientsError = $"{ex.GetFullMessage()}";
 
       agentClients = null;
     }

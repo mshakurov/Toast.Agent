@@ -42,7 +42,13 @@ public static class DeviceHardwareProviderService
       var log = new List<string>();
 
       log.Add( "*** Build ***" );
-      log.Add( GetValues( typeof( Build ).GetProperties( System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static ).Where( p => p.CanRead && p.GetIndexParameters().Length == 0 ).ToArray() ) );
+      log.Add( GetValues( typeof( Build ).GetProperties( System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static ).Where( p => p.CanRead && p.GetIndexParameters().Length == 0 ).OrderBy( p => 
+        p.Name.Equals( "Fingerprint", StringComparison.InvariantCultureIgnoreCase ) ? 1
+        : p.Name.Equals( "Brand", StringComparison.InvariantCultureIgnoreCase ) ? 2
+        : p.Name.Equals( "Model", StringComparison.InvariantCultureIgnoreCase ) ? 3
+        : p.Name.Equals( "Device", StringComparison.InvariantCultureIgnoreCase ) ? 4
+        : int.MaxValue 
+        ).ToArray() ) );
 
       log.Add( "*** Build.VERSION ***" );
       log.Add( GetValues( typeof( Build.VERSION ).GetProperties( System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static ).Where( p => p.CanRead && p.GetIndexParameters().Length == 0 ).ToArray() ) );

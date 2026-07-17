@@ -1,5 +1,6 @@
 ﻿@using Microsoft.EntityFrameworkCore
 @using Toast.Core.Commands
+@using Toast.Core.Utilities
 @using Toast.Server.Data
 @inject CommandService commandService;
 @using Toast.Server.Components.Shared.MyTable;
@@ -37,7 +38,7 @@
         }
         <td>
           <button class="btn btn-outline-danger btn-sm"
-                  @onclick="@(() => context.AskDelete = !context.AskDelete)"
+                  @onclick="@(() => current.AskDelete = !current.AskDelete)"
                   title="Удалить запись"
                   disabled="@deleting">
             <i class="bi bi-trash"></i>
@@ -47,7 +48,7 @@
         <td style="max-width:30rem">@current.AgentResult.AgentId</td>
         <td style="max-width:30rem">@current.ReceivedStr</td>
         <td style="max-width:30rem">
-          <a title="Просмотр всех результатов этого ответа" @onclick="@(() => current.ResultsShown = !current.ResultsShown)">
+          <a title="Просмотр всех результатов этого ответа" style="cursor: pointer; transition: background-color 0.2s ease;" @onclick="@(() => current.ResultsShown = !current.ResultsShown)">
             <i class="bi-eye-fill" style="margin-right:0.5rem"></i>
             @current.ResultsInfo
           </a>
@@ -75,9 +76,8 @@
           <tr>
             <td colspan="5" class="p-0" style="height: 1px;">
               <textarea class="w-100 h-100 d-block border-0 form-control form-control-sm rounded-0"
-                      style="resize: both; min-height: 4rem;">
-@current.ResultsFullInfo
-        </textarea>
+                      style="resize: both; min-height: 4rem;"
+                      value="@current.ResultsFullInfo"/>
             </td>
           </tr>
         }
@@ -121,7 +121,7 @@
     }
     catch ( Exception ex )
     {
-      alert = $"Ошибка чтения: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}";
+      alert = $"Ошибка чтения: {ex.GetFullMessage()}";
     }
   }
 
@@ -172,7 +172,7 @@
     }
     catch ( Exception ex )
     {
-      alert = $"Ошибка удаления: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}";
+      alert = $"Ошибка удаления: {ex.GetFullMessage()}";
     }
     finally
     {
@@ -201,10 +201,8 @@
       this.AgentResult = agentResultDB;
       Results = agentResultDB.Results;
       ReceivedStr = agentResultDB.Received?.ToString( "s" ) ?? string.Empty;
-      ResultsInfo = $"({Results.Count}) " + TrimLen( string.Join( ", ", Results.Select( r => $"[{( r.Success ? "!" : "#" )}, {TrimLen( r.Message, 30 )}]" ) ), 200 );
+      ResultsInfo = $"({Results.Count}) " + string.Join( ", ", Results.Select( r => $"[{( r.Success ? "!" : "#" )}, {r.Message.TrimRight( 70 )}]" ) ).TrimRight( 200 );
       ResultsFullInfo = string.Join( Environment.NewLine, Results.Select( r => $"- [{( r.Success ? "!" : "#" )}, Сообщ: {r.Message}]" ) );
     }
-
-    static string TrimLen( string? str, int len ) => str != null && str.Length > len ? $"{str[..len]}.." : ( str ?? string.Empty );
   }
 }

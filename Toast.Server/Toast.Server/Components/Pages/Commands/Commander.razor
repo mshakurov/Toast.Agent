@@ -20,12 +20,12 @@
     <Tab Name="@PageComponents.DBTables" Title="DBTables">
       <DBTables GetRendererType="@GetRendererType" />
     </Tab>
+    <Tab Name="@PageComponents.ViewCommandResults">
+      <ViewCommandResults/>
+    </Tab>
     <Tab Name="@PageComponents.SendCommands" Hint="Выполнение команд на клиентах">
       <SendCommands />
     </Tab>
-@*     <Tab Name="@PageComponents.ChangeSettings">
-      Test 2
-    </Tab> *@
   </TabControl>
 
 </AuthorizeView>
@@ -35,7 +35,7 @@
   {
     SendCommands,
     DBTables,
-    // ChangeSettings
+    ViewCommandResults
   }
 
   protected async override Task OnInitializedAsync()

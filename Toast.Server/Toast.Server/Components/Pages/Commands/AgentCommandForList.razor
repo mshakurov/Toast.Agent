@@ -1,5 +1,6 @@
 ﻿@using Microsoft.EntityFrameworkCore
 @using Toast.Core.Commands
+@using Toast.Core.Utilities
 @using Toast.Server.Data
 @inject CommandService commandService;
 @using Toast.Server.Components.Shared.MyTable;
@@ -156,7 +157,7 @@
     }
     catch ( Exception ex )
     {
-      alert = $"Ошибка чтения: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}";
+      alert = $"Ошибка чтения: {ex.GetFullMessage()}";
     }
   }
 
@@ -184,7 +185,7 @@
     }
     catch ( Exception ex )
     {
-      alert = $"Ошибка удаления: {ex.Message}|{ex.InnerException?.Message}|{ex.InnerException?.InnerException?.Message}";
+      alert = $"Ошибка удаления: {ex.GetFullMessage()}";
     }
     finally
     {

@@ -1,6 +1,7 @@
 ﻿
 using Microsoft.AspNetCore.Components;
 
+using Toast.Core.Utilities;
 using Toast.Server.Data;
 
 namespace Toast.Server.Components.Pages
@@ -91,7 +92,7 @@ namespace Toast.Server.Components.Pages
       }
       catch ( Exception ex )
       {
-        alert = $"Ошибка чтения списка типов: {ex}";
+        alert = $"Ошибка чтения списка типов: {ex.GetFullMessage()}";
       }
 
       StateHasChanged();
@@ -151,7 +152,7 @@ namespace Toast.Server.Components.Pages
       }
       catch ( Exception ex )
       {
-        alert = $"Ошибка чтения данных типа '{entityType.Name}': {ex}";
+        alert = $"Ошибка чтения данных типа '{entityType.Name}': {ex.GetFullMessage()}";
         return [];
       }
     }
@@ -188,7 +189,7 @@ namespace Toast.Server.Components.Pages
       }
       catch ( Exception ex )
       {
-        alert = $"Ошибка удаления '{context}': {ex}";
+        alert = $"Ошибка удаления '{context}': {ex.GetFullMessage()}";
       }
       finally
       {

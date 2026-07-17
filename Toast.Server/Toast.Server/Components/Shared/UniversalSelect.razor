@@ -1,0 +1,67 @@
+﻿
+<select class="form-select" @onchange="OnInternalSelectChanged">
+  @if ( Items == null )
+  {
+    <option value="">-- Нет элементов --</option>
+  }
+  else
+  {
+    @foreach ( var item in Items )
+    {
+      @* Сравниваем элементы для установки selected *@
+      <option value="@item?.GetHashCode()" selected="@(item?.Equals( Selected ) == true)">
+        @GetDisplayValue( item )
+      </option>
+    }
+  }
+</select>
+
+@code {
+  // 1. Список любых объектов для выбора
+  [Parameter] public IEnumerable<object?>? Items { get; set; }
+
+  // 2. Двусторонний биндинг: Текущий выбранный объект
+  [Parameter] public object? Selected { get; set; }
+  [Parameter] public EventCallback<object?> SelectedChanged { get; set; }
+
+  // 3. Кастомное событие, которое вы просили вызывать при смене выбора
+  [Parameter] public EventCallback<object?> OnSelectChanged { get; set; }
+
+  // 4. Имя свойства объекта, которое нужно выводить как текст (необязательно)
+  [Parameter] public string? DisplayProperty { get; set; }
+
+  // Метод обработки выбора в HTML-селекте
+  private async Task OnInternalSelectChanged( ChangeEventArgs e )
+  {
+    string? selectedHashCodeStr = e.Value?.ToString();
+    object? matchedItem = null;
+
+    if ( !string.IsNullOrEmpty( selectedHashCodeStr ) && Items != null )
+    {
+      // Находим объект в списке по его хэш-коду
+      matchedItem = Items.FirstOrDefault( item => item?.GetHashCode().ToString() == selectedHashCodeStr );
+    }
+
+    // Обновляем биндинг (отправляем значение в родительский компонент)
+    await SelectedChanged.InvokeAsync( matchedItem );
+
+    // Вызываем ваш кастомный метод OnSelectChanged
+    if ( OnSelectChanged.HasDelegate )
+    {
+      await OnSelectChanged.InvokeAsync( matchedItem );
+    }
+  }
+
+  // Вспомогательный метод для получения текста для тега <option>
+  private string GetDisplayValue( object? item )
+  {
+    if ( item == null ) return string.Empty;
+
+    if ( string.IsNullOrEmpty( DisplayProperty ) )
+      return item.ToString() ?? string.Empty;
+
+    // Если указано имя свойства (например "Name"), достаем его через рефлексию
+    var property = item.GetType().GetProperty( DisplayProperty );
+    return property?.GetValue( item )?.ToString() ?? item.ToString() ?? string.Empty;
+  }
+}

@@ -1,0 +1,172 @@
+﻿@using Microsoft.EntityFrameworkCore
+@using Toast.Core.Commands
+@using Toast.Core.Utilities
+@using Toast.Server.Components.Shared
+@using Toast.Server.Data
+@inject CommandService commandService;
+@using Toast.Server.Components.Shared.MyTable;
+@using Toast.Server.Data.Models
+
+<div class="form-control">
+  <h6>View DeviceInfo</h6>
+
+  <div class="form-row">
+    <div class="input-group input-group-sm mb-2">
+
+      <div class="input-group-prepend">
+        <button class="btn btn-outline-info" @onclick="@RefreshClick" title="Обновить" disabled="@loading"><i class="bi bi-arrow-clockwise"></i></button>
+      </div>
+
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="">Records: @commandService.Current.ViewCommandResults_ResultCollection.Length.ToString( "#,0" )</span>
+      </div>
+
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="" title="Сначала выбираются 'Max Rows' записей, потом применяется фильтр">Max Rows:</span>
+      </div>
+      <input type="number" class="form-control" style="max-width:5rem" id="filter" placeholder="filter" @bind-value=@commandService.Current.ViewCommandResults_MaxRows @bind-value:event="oninput" />
+
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="" title="Сначала выбираются 'Max Rows' записей, потом применяется фильтр">Filter:</span>
+      </div>
+      <input type="text" class="form-control" id="filter" placeholder="filter" @bind-value=@commandService.Current.ViewCommandResults_Filter @bind-value:event="oninput" />
+
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="">CommandType:</span>
+      </div>
+      <UniversalSelect Items="@CommandTypes.All" @bind-Selected="@commandService.Current.ViewCommandResults_SelectedCommandType" OnSelectChanged="@OnClientSelectChanged" />
+    </div>
+  </div>
+
+  <div class="form-row">
+    <TableMy Items="@commandResults" Border Compact>
+      <TableHeader>
+        <th class="text-center"><span class="bi bi-eye" title="Просмотр подробностей"></span></th>
+        <th style="max-width:30rem">Client</th>
+        <th style="max-width:30rem">Received</th>
+        <th style="max-width:30rem">Type</th>
+        <th>Result</th>
+      </TableHeader>
+      <TableRow>
+        @{
+          var current = context;
+          var result = @current.Result;
+          var style = current.Detailed ? " d-block border-0" : "";
+        }
+        <td>
+          <button class="btn btn-outline-danger btn-sm"
+                  @onclick="@(() => current.Detailed = !current.Detailed)"
+                  title="Показать детали">
+            <span class="bi bi-eye"></span>
+          </button>
+        </td>
+        <td>@result.Client.ClientId</td>
+        <td>@result.ReceivedStr</td>
+        <td>@result.Command.Type</td>
+        <td style="@style">@result.CommandResultShortInfo</td>
+      </TableRow>
+      <AfterRow>
+        @{
+          var current = context;
+          var result = @current.Result;
+        }
+        @if ( current.Detailed )
+        {
+          <tr>
+            <td colspan="4" class="p-0" style="height: 1px;">
+              <textarea class="w-100 h-100 d-block border-0 form-control form-control-sm rounded-0"
+                      style="resize: both; min-height: 3rem;"
+                      value="@result.ClientInfo" />
+            </td>
+            <td colspan="1" class="p-0" style="height: 1px;">
+              <textarea class="w-100 h-100 d-block border-0 form-control form-control-sm rounded-0"
+                      style="resize: both; min-height: 3rem;"
+                      value="@result.LastSessionInfo" />
+            </td>
+          </tr>
+          <tr>
+            <td colspan="5" class="p-0" style="height: 1px;">
+              <textarea class="w-100 h-100 d-block border-0 form-control form-control-sm rounded-0"
+                      style="resize: both; min-height: 10rem;"
+                      value="@result.CommandResultFullInfo" />
+            </td>
+          </tr>
+        }
+      </AfterRow>
+    </TableMy>
+  </div>
+
+
+  @if ( alert != null )
+  {
+    <textarea class="form-control text-bg-warning" rows="@alertRows" @bind="@alert"></textarea>
+  }
+
+</div>
+
+@code {
+
+  CommandResultUI[] commandResults = [];
+
+  bool loading;
+  string? alert = null;
+  int alertRows = 3;
+
+  protected override async Task OnInitializedAsync()
+  {
+    await base.OnInitializedAsync();
+
+    commandResults = CommandResultUI.CreateFrom( commandService.Current.ViewCommandResults_ResultCollection );
+  }
+
+  async Task LoadData()
+  {
+    commandResults = [];
+    commandService.Current.ViewCommandResults_ResultCollection = [];
+    alert = null;
+    loading = true;
+    await InvokeAsync( StateHasChanged );
+
+    try
+    {
+      commandService.Current.ViewCommandResults_ResultCollection = ( await commandService.GetLastDeviceInfos( commandService.Current.ViewCommandResults_SelectedCommandType.ToString() ?? string.Empty, commandService.Current.ViewCommandResults_Filter, commandService.Current.ViewCommandResults_MaxRows ) ).ToArray();
+
+      commandResults = CommandResultUI.CreateFrom( commandService.Current.ViewCommandResults_ResultCollection );
+    }
+    catch ( Exception ex )
+    {
+      alert = $"Ошибка чтения: {ex.GetFullMessage()}";
+    }
+    finally
+    {
+      loading = false;
+    }
+  }
+
+
+  async Task RefreshClick()
+  {
+    await LoadData();
+  }
+
+  async Task OnClientSelectChanged( object? selected )
+  {
+    await LoadData();
+  }
+
+  class CommandResultUI
+  {
+    public readonly CommandResultInfo Result;
+
+    public bool Detailed { get; set; }
+
+    private CommandResultUI( CommandResultInfo result )
+    {
+      Result = result;
+    }
+
+    public static CommandResultUI[] CreateFrom( CommandResultInfo[] results )
+      => results.Select( r => new CommandResultUI( r ) ).ToArray();
+  }
+
+}
