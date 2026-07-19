@@ -89,7 +89,15 @@ namespace Toast.AndroidOS.Activities
 
       _editUID!.Text = settings.HostUID;
 
-      _editHARDWARE!.Text = DeviceHardwareProviderService.GetDeviceHumanReadableName();
+      _editHARDWARE!.Text = "Чтение информации ..." 
+        + System.Environment.NewLine
+        + DeviceHardwareProviderService.GetDeviceHumanReadableName();
+
+      Task.Run( async () =>
+      {
+        var info = await DeviceHardwareProviderService.GetDeviceHumanReadableFullInfo();
+        RunOnUiThread( () => _editHARDWARE!.Text = info );
+      } );
 
       // 3. Динамически строим форму для каждого сервера из массива
       if ( settings.Servers != null )
