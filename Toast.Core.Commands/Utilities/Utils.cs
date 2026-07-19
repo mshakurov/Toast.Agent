@@ -45,6 +45,15 @@ public static class Utils
       .Select( p => formatter( p, GetPropertyValue( p, obj ) ) ).OfType<string>() );
   }
 
+  public static string DumpTypeStaticProps(this Type type, string delimiter = ", ", DumpPropsFormatterDelegate? formatter = null )
+  {
+    if ( formatter == null )
+      formatter = ( pi, val ) => $"{val}";
+
+    return string.Join( delimiter, type.GetProperties(BindingFlags.Public | BindingFlags.Static).Where( p => p.CanRead && p.GetIndexParameters().Length == 0 && p.Name != "StackTrace" )
+      .Select( p => formatter( p, GetPropertyValue( p, null ) ) ).OfType<string>() );
+  }
+
   /// <summary>
   /// Печатает значения полей в формате 'Имя [тип]: Значение'
   /// </summary>

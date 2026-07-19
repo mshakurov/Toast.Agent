@@ -317,6 +317,8 @@ namespace Toast.Server.Data
 
     public class State
     {
+      public string HostInfo { get; set; } = string.Empty;
+
       public object? Commander_SelectedTab { get; set; }
 
       public object? SendCommand_SelectedTab { get; set; }

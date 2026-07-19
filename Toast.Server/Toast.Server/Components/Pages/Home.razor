@@ -1,7 +1,55 @@
 ﻿@page "/"
+@using System.Text
+@using Toast.Server.Data
+@using Toast.Core.Utilities;
+@using Toast.Core.Commands;
+@inject CommandService commandService;
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Hot Info</h1>
+<button class="btn btn-outline-info" @onclick="@StartCollectInfo" title="Обновить" disabled="@loading"><i class="bi bi-arrow-clockwise"></i></button>
+<textarea readonly class="w-100 form-control form-control-sm border-1 rounded-1"`
+  rows="20" style="resize: vertical">@commandService.Current.HostInfo</textarea>
 
-Welcome to your new app.
+@code {
+
+  bool loading;
+
+  protected override async Task OnInitializedAsync()
+  {
+    await base.OnInitializedAsync();
+
+    if ( string.IsNullOrEmpty( commandService.Current.HostInfo ) )
+      _ = StartCollectInfo();
+  }
+
+  async Task StartCollectInfo()
+  {
+    loading = true;
+    commandService.Current.HostInfo = "сбор информации...";
+    await InvokeAsync( StateHasChanged );
+
+    var log = new StringBuilder();
+    log.AppendLine( "*** Host info ***" );
+    log.AppendLine( typeof( Environment ).DumpTypeStaticProps( Environment.NewLine, ( p, v ) => $"{p.Name} [{p.PropertyType.Name}]: {v}" ) ).AppendLine();
+    commandService.Current.HostInfo = 
+      "... Сбор сетевой информации ..."
+      + Environment.NewLine + Environment.NewLine
+      + log.ToString()
+      ;
+    await InvokeAsync( StateHasChanged );
+    try
+    {
+      log.AppendLine( await NetworkDiscoverService.GetHostNetworkInfoAsync() );
+    }
+    catch ( Exception ex )
+    {
+      log.AppendLine( $"### {ex.GetFullMessage()}" );
+    }
+
+    loading = false;
+    commandService.Current.HostInfo = log.ToString();
+    await InvokeAsync( StateHasChanged );
+  }
+}
