@@ -19,6 +19,7 @@ internal sealed class AgentService : Service
   private IBinder? _binder;
   private CancellationTokenSource? _cts;
   private Task? _agentTask;
+  private AndroidStatusListener? externalAndroidService;
 
   private ILogger? _logger;
 
@@ -61,7 +62,10 @@ internal sealed class AgentService : Service
 
       _cts = new CancellationTokenSource();
 
-      var agent = CompositionRoot.CreateAgent( new AndroidStatusListener( this, _logger, _cts.Token ) );
+      externalAndroidService = new( this, _logger, _cts.Token );
+      externalAndroidService.OnStatusChanged += ExternalAndroidService_OnStatusChanged;
+
+      var agent = CompositionRoot.CreateAgent( externalAndroidService );
 
       _agentTask = Task.Run( () => agent.ExecuteAsync( _cts.Token ) );
 
@@ -72,6 +76,11 @@ internal sealed class AgentService : Service
     }
 
     return StartCommandResult.Sticky;
+  }
+
+  private void ExternalAndroidService_OnStatusChanged( object? sender, AgentStatus e )
+  {
+    
   }
 
   void StartForegroundBefore29( AgentState state )
@@ -96,9 +105,19 @@ internal sealed class AgentService : Service
       ForegroundService.TypeDataSync );
   }
 
+  public override bool StopService( Intent? name )
+  {
+    _logger?.Info( this, "StopService" );
+
+    return base.StopService( name );
+  }
+
   public override void OnDestroy()
   {
-    _logger?.Info( this, "Service stopping" );
+    _logger?.Info( this, "OnDestroy, Cancelling service task." );
+
+    if ( externalAndroidService != null )
+      externalAndroidService.OnStatusChanged -= ExternalAndroidService_OnStatusChanged;
 
     _cts?.Cancel();
 

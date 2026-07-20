@@ -13,6 +13,8 @@ namespace Toast.AndroidOS.Services
     private readonly CancellationToken _token;
     private readonly State _pendingState;
 
+    public event EventHandler<AgentStatus>? OnStatusChanged;
+
     public AgentStatus? CurrentState => _pendingState.Get().PendingStatus;
 
     public AndroidStatusListener( Context context, ILogger? logger, CancellationToken token )
@@ -21,10 +23,10 @@ namespace Toast.AndroidOS.Services
       _logger = logger;
       _pendingState = new();
       _token = token;
-      _notifyTask = Task.Factory.StartNew( NotifyLastStatus );
+      _notifyTask = Task.Factory.StartNew( NotifyLastStatusTask );
     }
 
-    private void NotifyLastStatus()
+    private void NotifyLastStatusTask()
     {
       while ( true )
       {
@@ -54,7 +56,16 @@ namespace Toast.AndroidOS.Services
     {
       //_logger?.Debug( this, $"> {_pendingState.Count}){_pendingState.PendingStatus?.State}|{_pendingState.PendingStatus?.Details} -> ReportStatus({status.State}|{status.Details})" );
 
-      _pendingState.Add( status );
+      var state = _pendingState.Add( status );
+
+      try
+      {
+        OnStatusChanged?.Invoke( this, state.PendingStatus! );
+      }
+      catch ( Exception ex )
+      {
+        _logger?.Error( _context, $"Failed to call OnStatusChanged for status (({state.Count}){state.PendingStatus}): {ex.GetFullMessage()}" );
+      }
 
       //_logger?.Debug( this, $"< {_pendingState.Count}){_pendingState.PendingStatus?.State}|{_pendingState.PendingStatus?.Details}" );
     }
@@ -68,12 +79,13 @@ namespace Toast.AndroidOS.Services
       public long Count { get; private set; }
       public AgentStatus? PendingStatus { get; private set; }
 
-      public void Add( AgentStatus status )
+      public State Add( AgentStatus status )
       {
         lock ( locker )
         {
           Count += 1;
           PendingStatus = new AgentStatus { State = status.State, Details = $"({Count} at {status.Timestamp:HH:mm:ss})" + ( status.Details != null ? $" {status.Details}" : string.Empty ), Timestamp = status.Timestamp };
+          return Get();
         }
       }
 

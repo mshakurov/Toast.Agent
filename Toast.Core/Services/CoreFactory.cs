@@ -18,7 +18,7 @@ namespace Toast.Core.Services
         HostShowMessage = hostShowMessage
       };
 
-      return new AgentService( agentContext );
+      return new AgentServiceImpl( agentContext );
     }
 
     internal static IPollingService CreatePollingService( HostingContext context ) => new PollingService( context );

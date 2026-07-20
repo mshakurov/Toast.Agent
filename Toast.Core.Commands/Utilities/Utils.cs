@@ -71,6 +71,7 @@ public static class Utils
   }
 
   public static string TrimRight( this string? str, int len ) => str != null && str.Length > len ? $"{str[..len]}.." : ( str ?? string.Empty );
+  public static string TrimLeft( this string? str, int len ) => str != null && str.Length > len ? $"{str[len..]}.." : ( str ?? string.Empty );
 
   public static string? GetFullMessage( this Exception exc, string delimiter = ", ", HashSet<Exception>? hash = null )
   {

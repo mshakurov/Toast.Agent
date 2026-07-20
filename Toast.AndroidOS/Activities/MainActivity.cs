@@ -15,6 +15,9 @@ namespace Toast.AndroidOS.Activities
     private readonly ILogger _logger = CompositionRoot.GetSingletonLogger();
     private PermissionCheckHelper? _permissionCheckHelper;
     private readonly CancellationTokenSource _ctsCheckPermissions = new();
+    
+    internal AgentService? AgentService;
+    private AgentServiceConnection? _serviceConnection;
 
     protected override void OnCreate( Bundle? savedInstanceState )
     {
@@ -35,13 +38,65 @@ namespace Toast.AndroidOS.Activities
       base.OnStart();
 
       _permissionCheckHelper?.StartCheckPermissions();
+
+      // Начинаем подключение к сервису при каждом открытии приложения
+      _logger.Info( this, $"OnStart > BindService (AgentService: {AgentService != null})" );
+      BindToAgentService();
+      _logger.Info( this, $"OnStart < BindService (AgentService: {AgentService != null})" );
     }
 
     protected override void OnStop()
     {
+      base.OnStop();
+
       _ctsCheckPermissions.Cancel();
 
-      base.OnStop();
+      // ОБЯЗАТЕЛЬНО отвязываемся при закрытии экрана, чтобы избежать утечек памяти
+      _logger.Info( this, $"OnStop > BindService (AgentService: {AgentService != null})" );
+      UnbindFromAgentService();
+      _logger.Info( this, $"OnStop < BindService (AgentService: {AgentService != null})" );
+    }
+
+    private void BindToAgentService()
+    {
+      _serviceConnection = new AgentServiceConnection( this );
+      Intent intent = new Intent( this, typeof( AgentService ) );
+      BindService( intent, _serviceConnection, Bind.None );
+    }
+
+    void UnbindFromAgentService()
+    {
+      if ( AgentService != null && _serviceConnection != null )
+      {
+        _logger.Info( this, $"OnStart > UnbindService (AgentService: {AgentService != null})" );
+        UnbindService( _serviceConnection );
+        _logger.Info( this, $"OnStart < UnbindService (AgentService: {AgentService != null})" );
+      }
+    }
+
+    // Метод вызывается автоматически из MyServiceConnection, когда связь установлена
+    public void OnServiceSuccessfullyConnected()
+    {
+      RunOnUiThread( () => {
+        _logger.Info( this, "! OnServiceSuccessfullyConnected" );
+
+        Android.Widget.Toast.MakeText( this, "Успешно подключено к фоновому сервису!", ToastLength.Short )?.Show();
+
+        this.PrependLine( textView, "!!! Подключено !!!" );
+      } );
+    }
+
+    public void OnServiceDisconnected()
+    {
+      RunOnUiThread( () => {
+        UnbindFromAgentService();
+
+        _logger.Info( this, "@ OnServiceDisconnected" );
+
+        Android.Widget.Toast.MakeText( this, "Остановлен фоновый сервис!", ToastLength.Short )?.Show();
+
+        this.PrependLine( textView, "@@@ Отключено @@@" );
+      } );
     }
 
     public override bool ShouldShowRequestPermissionRationale( string permission )

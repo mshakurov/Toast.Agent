@@ -7,13 +7,13 @@ using Toast.Core.Models;
 
 namespace Toast.Core.Services
 {
-  internal sealed class AgentService : IAgentService
+  internal sealed class AgentServiceImpl : IAgentService
   {
     private HostingContext _context;
     private readonly AgentServiceContext _serviceContext;
     private readonly ConcurrentQueue<CommandResult> _postponedResults = new();
 
-    public AgentService( HostingContext agentContext )
+    public AgentServiceImpl( HostingContext agentContext )
     {
       _context = agentContext;
       _serviceContext = new( this );
@@ -103,7 +103,7 @@ namespace Toast.Core.Services
       }
     }
 
-    class AgentServiceContext( AgentService service ) : IAgentServiceContext
+    class AgentServiceContext( AgentServiceImpl service ) : IAgentServiceContext
     {
       // особый случай - изменение настроек агента, локально, из команды. хост тоже может изменить настройки, но чтобы они вступили в силу, хост должен перезапустить агента. а локально агент может изменить настройки и продолжить работу с ними.
       public void UpdateSettings( IHostSettings settings )

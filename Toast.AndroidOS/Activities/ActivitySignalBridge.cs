@@ -15,7 +15,7 @@ public static class ActivitySignalBridge
   // Внутренний класс, представляющий состояние одного ожидания
   private class WaiterState : IDisposable
   {
-    private readonly Action<(bool timedOut, string log)> _callback;
+    private readonly Action<(bool timedOut, string log)> _onFinishOrTimeOut;
     private readonly Timer _timer;
     private int _isCompleted = 0; // Флаг атомарности для предотвращения двойного вызова
     private StringBuilder _log;
@@ -23,10 +23,10 @@ public static class ActivitySignalBridge
 
     public Guid Id { get; }
 
-    public WaiterState( Guid id, TimeSpan timeout, Action<(bool timedOut, string log)> callback )
+    public WaiterState( Guid id, TimeSpan timeout, Action<(bool timedOut, string log)> onFinishOrTimeOut )
     {
       Id = id;
-      _callback = callback;
+      _onFinishOrTimeOut = onFinishOrTimeOut;
       _log = new();
       _swStarted = Stopwatch.StartNew();
       LogLine( "Created" );
@@ -58,7 +58,7 @@ public static class ActivitySignalBridge
         _waiters.TryRemove( Id, out _ );
 
         // Вызываем делегат сервиса
-        _callback.Invoke( (timedOut, _log.ToString()) );
+        _onFinishOrTimeOut.Invoke( (timedOut, _log.ToString()) );
 
         // Освобождаем ресурсы таймера
         Dispose();
