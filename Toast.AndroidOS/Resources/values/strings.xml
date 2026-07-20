@@ -10,6 +10,8 @@
 	<string name="setNetworkCheckPermissionsRu">Настройте право проверки сети в окне настроек</string>
 	<string name="setUseFullScreenIntentPermissionsEn">Настройте право уведомлений на весь экран</string>
 	<string name="setUseFullScreenIntentPermissionsRu">Set up full-screen notification rights</string>
+	<string name="buttonTestBindToAgentService">Test Bind</string>
+	<string name="buttonTestUnbindFromAgentService">Test Unbind</string>
 	<string name="buttonTestRequest">Test Request</string>
 	<string name="buttonTestShowMessage">Show Message</string>
 	<string name="buttonTestShowMessageService">ShowMsg Service</string>

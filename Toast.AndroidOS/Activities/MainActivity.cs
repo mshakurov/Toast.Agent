@@ -15,9 +15,10 @@ namespace Toast.AndroidOS.Activities
     private readonly ILogger _logger = CompositionRoot.GetSingletonLogger();
     private PermissionCheckHelper? _permissionCheckHelper;
     private readonly CancellationTokenSource _ctsCheckPermissions = new();
-    
+
     internal AgentService? AgentService;
     private AgentServiceConnection? _serviceConnection;
+    private string GetSvcDngInfo() => $"(Conn: {_serviceConnection != null}, Svc: {AgentService != null})";
 
     protected override void OnCreate( Bundle? savedInstanceState )
     {
@@ -40,9 +41,9 @@ namespace Toast.AndroidOS.Activities
       _permissionCheckHelper?.StartCheckPermissions();
 
       // Начинаем подключение к сервису при каждом открытии приложения
-      _logger.Info( this, $"OnStart > BindService (AgentService: {AgentService != null})" );
+      _logger.Info( this, $"OnStart > BindToAgentService {GetSvcDngInfo()}" );
       BindToAgentService();
-      _logger.Info( this, $"OnStart < BindService (AgentService: {AgentService != null})" );
+      _logger.Info( this, $"OnStart < BindToAgentService {GetSvcDngInfo()}" );
     }
 
     protected override void OnStop()
@@ -52,33 +53,42 @@ namespace Toast.AndroidOS.Activities
       _ctsCheckPermissions.Cancel();
 
       // ОБЯЗАТЕЛЬНО отвязываемся при закрытии экрана, чтобы избежать утечек памяти
-      _logger.Info( this, $"OnStop > BindService (AgentService: {AgentService != null})" );
+      _logger.Info( this, $"OnStop > UnbindFromAgentService {GetSvcDngInfo()}" );
       UnbindFromAgentService();
-      _logger.Info( this, $"OnStop < BindService (AgentService: {AgentService != null})" );
+      _logger.Info( this, $"OnStop < UnbindFromAgentService {GetSvcDngInfo()}" );
     }
 
     private void BindToAgentService()
     {
+      _logger.Debug( this, $"BindToAgentService > {GetSvcDngInfo()}" );
+      UnbindFromAgentService();
       _serviceConnection = new AgentServiceConnection( this );
       Intent intent = new Intent( this, typeof( AgentService ) );
+      _logger.Debug( this, $"> BindService > {GetSvcDngInfo()}" );
       BindService( intent, _serviceConnection, Bind.None );
+      _logger.Debug( this, $"< BindService < {GetSvcDngInfo()}" );
+      _logger.Debug( this, $"BindToAgentService < {GetSvcDngInfo()}" );
     }
 
     void UnbindFromAgentService()
     {
-      if ( AgentService != null && _serviceConnection != null )
+      _logger.Debug( this, $"UnbindFromAgentService > {GetSvcDngInfo()}" );
+      if ( _serviceConnection != null )
       {
-        _logger.Info( this, $"OnStart > UnbindService (AgentService: {AgentService != null})" );
+        _logger.Debug( this, $"> UnbindService > {GetSvcDngInfo()}" );
         UnbindService( _serviceConnection );
-        _logger.Info( this, $"OnStart < UnbindService (AgentService: {AgentService != null})" );
+        _serviceConnection = null;
+        _logger.Debug( this, $"< UnbindService < {GetSvcDngInfo()}" );
       }
+      _logger.Debug( this, $"UnbindFromAgentService < {GetSvcDngInfo()}" );
     }
 
     // Метод вызывается автоматически из MyServiceConnection, когда связь установлена
     public void OnServiceSuccessfullyConnected()
     {
-      RunOnUiThread( () => {
-        _logger.Info( this, "! OnServiceSuccessfullyConnected" );
+      RunOnUiThread( () =>
+      {
+        _logger.Info( this, $"! OnServiceSuccessfullyConnected {GetSvcDngInfo()}" );
 
         Android.Widget.Toast.MakeText( this, "Успешно подключено к фоновому сервису!", ToastLength.Short )?.Show();
 
@@ -88,10 +98,11 @@ namespace Toast.AndroidOS.Activities
 
     public void OnServiceDisconnected()
     {
-      RunOnUiThread( () => {
-        UnbindFromAgentService();
+      RunOnUiThread( () =>
+      {
+        _logger.Info( this, $"@ OnServiceDisconnected {GetSvcDngInfo()}" );
 
-        _logger.Info( this, "@ OnServiceDisconnected" );
+        UnbindFromAgentService();
 
         Android.Widget.Toast.MakeText( this, "Остановлен фоновый сервис!", ToastLength.Short )?.Show();
 
@@ -138,6 +149,62 @@ namespace Toast.AndroidOS.Activities
 
       // Кнопка тестирования сервис показа сообщений
       SetupBtnTestShowMsgService();
+
+      // Кнопка тестирования биндинга к сервису
+      SetupBtnTestBindToAgentService();
+
+      // Кнопка тестирования унбиндинга от сервиса
+      SetupBtnTestUnbindFromAgentService();
+    }
+
+    private void SetupBtnTestUnbindFromAgentService()
+    {
+      var btnTestUnbindFromAgentService = FindViewById<Button>( Resource.Id.buttonTestUnbindFromAgentService );
+      if ( btnTestUnbindFromAgentService != null )
+      {
+        btnTestUnbindFromAgentService.Click += ( sender, e ) =>
+        {
+          _logger.Info( this, $"btnTestUnbindFromAgentService, Calling UnbindFromAgentService {GetSvcDngInfo()}" );
+
+          UnbindFromAgentService();
+
+          _logger.Info( this, $"btnTestUnbindFromAgentService, Finished call to UnbindFromAgentService {GetSvcDngInfo()}" );
+
+          if ( AgentService != null )
+            FindViewById<Button>( Resource.Id.buttonStart )?.SetBackgroundColor( Android.Graphics.Color.Green );
+          else
+            FindViewById<Button>( Resource.Id.buttonStart )?.SetBackgroundColor( Android.Graphics.Color.Red );
+
+          _logger.Info( this, $"btnTestUnbindFromAgentService <" );
+        };
+      }
+      else
+        _logger.Error( this, "# Button btnTestCheckBind not found" );
+    }
+
+    private void SetupBtnTestBindToAgentService()
+    {
+      var btnTestBindToAgentService = FindViewById<Button>( Resource.Id.buttonTestBindToAgentService );
+      if ( btnTestBindToAgentService != null )
+      {
+        btnTestBindToAgentService.Click += ( sender, e ) =>
+        {
+          _logger.Info( this, $"btnTestBindToAgentService, Calling BindToAgentService {GetSvcDngInfo()}" );
+
+          BindToAgentService();
+
+          _logger.Info( this, $"btnTestBindToAgentService, Finished call to BindToAgentService {GetSvcDngInfo()}" );
+
+          if ( AgentService != null )
+            FindViewById<Button>( Resource.Id.buttonStart )?.SetBackgroundColor( Android.Graphics.Color.Green );
+          else
+            FindViewById<Button>( Resource.Id.buttonStart )?.SetBackgroundColor( Android.Graphics.Color.Red );
+
+          _logger.Info( this, $"btnTestBindToAgentService <" );
+        };
+      }
+      else
+        _logger.Error( this, "# Button btnTestCheckBind not found" );
     }
 
     private void SetupBtnTestShowMsgService()
@@ -213,7 +280,7 @@ namespace Toast.AndroidOS.Activities
             _logger.Info( this, $"buttonTestRequest, Creating test service ... " );
 
             var settings = CompositionRoot.GetSingletonSettingsService().LoadSettings();
-            var servers = settings.GetValidServers().Select( ( s, i ) => (s, i: (ushort)i) ).OrderBy( s => s.i == settings.LastSuccessfulServerIndex ? 1 : 2 ).ThenBy( s => s.i ).ToArray();
+            var servers = settings.GetValidServers().Select( ( s, i ) => (s, i: ( ushort ) i) ).OrderBy( s => s.i == settings.LastSuccessfulServerIndex ? 1 : 2 ).ThenBy( s => s.i ).ToArray();
             if ( servers.Length == 0 )
             {
               this.RunOnUiThread( () =>
@@ -332,6 +399,8 @@ namespace Toast.AndroidOS.Activities
         btnStart.Click += ( sender, e ) =>
         {
           _permissionCheckHelper?.StartCheckPermissions();
+
+          BindToAgentService();
 
           _logger.Debug( this, $"buttonStart, Creating Intent" );
 

@@ -74,6 +74,31 @@
 
 	<!-- Контейнер для кнопок вверху экрана -->
 	<LinearLayout
+			android:id="@+id/buttonContainer4"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="horizontal"
+			android:layout_below="@id/buttonContainer"
+			android:padding="4dp">
+
+		<Button
+				android:id="@+id/buttonTestBindToAgentService"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:layout_weight="1"
+				android:text="@string/buttonTestBindToAgentService"/>
+
+		<Button
+				android:id="@+id/buttonTestUnbindFromAgentService"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:layout_weight="1"
+				android:text="@string/buttonTestUnbindFromAgentService"/>
+
+	</LinearLayout>
+
+	<!-- Контейнер для кнопок вверху экрана -->
+	<LinearLayout
 			android:id="@+id/buttonContainer3"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
